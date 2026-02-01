@@ -295,9 +295,14 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                 window.dispatchEvent(new CustomEvent('danger-level', { detail: { level: 0 } }));
                 return;
             }
-            // Find lowest Y (highest visual)
+
+            // Filter: Ignore bodies that are falling fast (velocity.y > 5) when determining visual danger
+            // This prevents the 'just dropped' item from flashing the screen red.
+            const stableBodies = bodies.filter(b => b.velocity.y < 5);
+
             let minY = height;
-            bodies.forEach(b => { if (b.position.y < minY) minY = b.position.y; });
+            // Use stableBodies for visual warning
+            stableBodies.forEach(b => { if (b.position.y < minY) minY = b.position.y; });
 
             const dangerThreshold = 250;
             const criticalThreshold = 150;
@@ -308,13 +313,12 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
 
             window.dispatchEvent(new CustomEvent('danger-level', { detail: { level } }));
 
-            // Game Over
-            if (minY < 50) { // Dead Line hardcoded or param
-                const overflowing = bodies.some(b => b.position.y < 120 && Math.abs(b.velocity.y) < 0.1);
-                if (overflowing) {
-                    window.dispatchEvent(new Event('game-over'));
-                    _setGameState(GAME_STATES.GAME_OVER);
-                }
+            // Game Over Check (Must still check ALL bodies, but with velocity constraint)
+            // 'overflowing' detects if something is STUCK at the top.
+            const overflowing = bodies.some(b => b.position.y < 120 && Math.abs(b.velocity.y) < 0.2);
+            if (overflowing) {
+                window.dispatchEvent(new Event('game-over'));
+                _setGameState(GAME_STATES.GAME_OVER);
             }
         });
 

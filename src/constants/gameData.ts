@@ -33,23 +33,23 @@ export const SYMBOLS: GameSymbol[] = [
 const BASE_ETFS: GameSymbol[] = [
     {
         id: 101, name: '물장 (Bear) ETF', radius: 35, color: '#3B82F6', score: 0, label: '🐻', texture: '/assets/etf_bear.svg',
-        tier: 'Common', description: '가장 작은 주식만 제거합니다. (하락장 방어)', actionType: 'DROP', effectId: 'BEAR'
+        tier: 'Common', description: '가장 작은 주식만 제거합니다. (하락장 방어)', actionType: 'DROP', effectId: 'BEAR', scale: 0.25
     },
     {
         id: 102, name: '불장 (Bull) ETF', radius: 40, color: '#EF4444', score: 0, label: '🐂', texture: '/assets/etf_bull.svg',
-        tier: 'Rare', description: '주변 주식을 흡수하여 성장합니다!', actionType: 'DROP', effectId: 'BULL'
+        tier: 'Rare', description: '주변 주식을 흡수하여 성장합니다!', actionType: 'DROP', effectId: 'BULL', scale: 0.3
     },
     {
         id: 103, name: '액면분할 (Split) ETF', radius: 35, color: '#A855F7', score: 0, label: '✂️', texture: '/assets/etf_clone.svg',
-        tier: 'Epic', description: '주식을 두 개의 하위 단계 주식으로 쪼갭니다.', actionType: 'DROP', effectId: 'SPLIT'
+        tier: 'Epic', description: '주식을 두 개의 하위 단계 주식으로 쪼갭니다.', actionType: 'DROP', effectId: 'SPLIT', scale: 0.25
     },
     {
         id: 104, name: 'Joker ETF', radius: 35, color: '#FF00FF', score: 0, label: '🃏', texture: '/assets/etf_joker.svg',
-        tier: 'Legendary', description: '어떤 주식과도 즉시 합쳐집니다! (만능 키)', actionType: 'DROP', effectId: 'JOKER'
+        tier: 'Legendary', description: '어떤 주식과도 즉시 합쳐집니다! (만능 키)', actionType: 'DROP', effectId: 'JOKER', scale: 0.25
     },
     {
         id: 105, name: 'Fed Stimulus', radius: 45, color: '#FCD34D', score: 0, label: '🏛️', texture: '/assets/etf_fed.svg',
-        tier: 'Mythic', description: '모든 주식의 단계를 한 단계 올려버립니다! (대폭등)', actionType: 'DROP', effectId: 'FED'
+        tier: 'Mythic', description: '모든 주식의 단계를 한 단계 올려버립니다! (대폭등)', actionType: 'DROP', effectId: 'FED', scale: 0.3
     },
     // NEW ONES
     {
@@ -78,7 +78,7 @@ const BASE_ETFS: GameSymbol[] = [
     },
     {
         id: 207, name: '공매도 폭격 (Short Bomb)', radius: 40, color: '#1F2937', score: 0, label: '💣',
-        tier: 'Epic', description: '떨어뜨리면 폭발하여 주변 주식을 날려버립니다.', actionType: 'DROP', effectId: 'BOMB'
+        tier: 'Epic', description: '떨어뜨리면 폭발하여 주변 주식을 날려버립니다.', actionType: 'DROP', effectId: 'BOMB', scale: 0.3
     },
     {
         id: 208, name: '상장 폐지 (Delisting)', radius: 0, color: '#991B1B', score: 0, label: '🚫',
