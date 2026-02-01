@@ -426,6 +426,11 @@ function App() {
           <EvolutionModal onClose={() => setShowEvolutionModal(false)} />
         )}
 
+        {/* Version Indicator */}
+        <div className="absolute bottom-1 left-2 text-[10px] text-gray-400 font-mono opacity-50 pointer-events-none z-50">
+          v1.2.1
+        </div>
+
         {/* Game Over Modal */}
         {isGameOver && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-500">
