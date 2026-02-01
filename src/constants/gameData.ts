@@ -14,17 +14,17 @@ export interface GameSymbol {
 }
 
 export const SYMBOLS: GameSymbol[] = [
-    { id: 0, name: 'Doge Coin', radius: 20, color: '#F0C330', score: 1, label: '🐕', texture: '/assets/stock_0.svg', scale: 0.15 },
-    { id: 1, name: 'Cacao', radius: 32, color: '#FAE100', score: 3, label: '💬', texture: '/assets/stock_1.svg', scale: 0.2 },
-    { id: 2, name: 'Neighbor', radius: 44, color: '#03C75A', score: 6, label: 'N', texture: '/assets/stock_2.svg', scale: 0.25 },
-    { id: 3, name: 'Samsong', radius: 56, color: '#1428A0', score: 10, label: '🔵', texture: '/assets/stock_3.svg', scale: 0.3 },
-    { id: 4, name: 'SKY Hynix', radius: 70, color: '#DB0025', score: 15, label: '🦋', texture: '/assets/stock_4.svg', scale: 0.35 },
-    { id: 5, name: 'Te-seul-la', radius: 86, color: '#E82127', score: 21, label: 'T', texture: '/assets/stock_5.svg', scale: 0.4 },
-    { id: 6, name: 'Go-gull', radius: 104, color: '#4285F4', score: 28, label: 'G', texture: '/assets/stock_6.svg', scale: 0.5 },
-    { id: 7, name: 'Ama-zone', radius: 124, color: '#FF9900', score: 36, label: '📦', texture: '/assets/stock_7.svg', scale: 0.6 },
-    { id: 8, name: 'Micros-oft', radius: 145, color: '#00A4EF', score: 45, label: '🪟', texture: '/assets/stock_8.svg', scale: 0.7 },
-    { id: 9, name: 'A-Plus', radius: 168, color: '#A2AAAD', score: 55, label: '🍎', texture: '/assets/stock_9.svg', scale: 0.8 },
-    { id: 10, name: 'Engvidia', radius: 195, color: '#76B900', score: 66, label: '👁️', texture: '/assets/stock_10.svg', scale: 0.9 },
+    { id: 0, name: 'Doge Coin', radius: 20, color: '#F0C330', score: 1, label: '🐕', texture: '/assets/stock_0.svg', scale: 0.2 },
+    { id: 1, name: 'Cacao', radius: 32, color: '#FAE100', score: 3, label: '💬', texture: '/assets/stock_1.svg', scale: 0.32 },
+    { id: 2, name: 'Neighbor', radius: 44, color: '#03C75A', score: 6, label: 'N', texture: '/assets/stock_2.svg', scale: 0.44 },
+    { id: 3, name: 'Samsong', radius: 56, color: '#1428A0', score: 10, label: '🔵', texture: '/assets/stock_3.svg', scale: 0.56 },
+    { id: 4, name: 'SKY Hynix', radius: 70, color: '#DB0025', score: 15, label: '🦋', texture: '/assets/stock_4.svg', scale: 0.7 },
+    { id: 5, name: 'Te-seul-la', radius: 86, color: '#E82127', score: 21, label: 'T', texture: '/assets/stock_5.svg', scale: 0.86 },
+    { id: 6, name: 'Go-gull', radius: 104, color: '#4285F4', score: 28, label: 'G', texture: '/assets/stock_6.svg', scale: 1.04 },
+    { id: 7, name: 'Ama-zone', radius: 124, color: '#FF9900', score: 36, label: '📦', texture: '/assets/stock_7.svg', scale: 1.24 },
+    { id: 8, name: 'Micros-oft', radius: 145, color: '#00A4EF', score: 45, label: '🪟', texture: '/assets/stock_8.svg', scale: 1.45 },
+    { id: 9, name: 'A-Plus', radius: 168, color: '#A2AAAD', score: 55, label: '🍎', texture: '/assets/stock_9.svg', scale: 0.66 },
+    { id: 10, name: 'Engvidia', radius: 195, color: '#76B900', score: 66, label: '👁️', texture: '/assets/stock_10.svg', scale: 0.76 },
 ];
 
 // Reusing Icons for new ETFs (generic fallbacks or specific logic)
@@ -33,23 +33,23 @@ export const SYMBOLS: GameSymbol[] = [
 const BASE_ETFS: GameSymbol[] = [
     {
         id: 101, name: '물장 (Bear) ETF', radius: 35, color: '#3B82F6', score: 0, label: '🐻', texture: '/assets/etf_bear.svg',
-        tier: 'Common', description: '가장 작은 주식만 제거합니다. (하락장 방어)', actionType: 'DROP', effectId: 'BEAR', scale: 0.25
+        tier: 'Common', description: '가장 작은 주식만 제거합니다. (하락장 방어)', actionType: 'DROP', effectId: 'BEAR', scale: 0.35
     },
     {
         id: 102, name: '불장 (Bull) ETF', radius: 40, color: '#EF4444', score: 0, label: '🐂', texture: '/assets/etf_bull.svg',
-        tier: 'Rare', description: '주변 주식을 흡수하여 성장합니다!', actionType: 'DROP', effectId: 'BULL', scale: 0.3
+        tier: 'Rare', description: '주변 주식을 흡수하여 성장합니다!', actionType: 'DROP', effectId: 'BULL', scale: 0.4
     },
     {
         id: 103, name: '액면분할 (Split) ETF', radius: 35, color: '#A855F7', score: 0, label: '✂️', texture: '/assets/etf_clone.svg',
-        tier: 'Epic', description: '주식을 두 개의 하위 단계 주식으로 쪼갭니다.', actionType: 'DROP', effectId: 'SPLIT', scale: 0.25
+        tier: 'Epic', description: '주식을 두 개의 하위 단계 주식으로 쪼갭니다.', actionType: 'DROP', effectId: 'SPLIT', scale: 0.35
     },
     {
         id: 104, name: 'Joker ETF', radius: 35, color: '#FF00FF', score: 0, label: '🃏', texture: '/assets/etf_joker.svg',
-        tier: 'Legendary', description: '어떤 주식과도 즉시 합쳐집니다! (만능 키)', actionType: 'DROP', effectId: 'JOKER', scale: 0.25
+        tier: 'Legendary', description: '어떤 주식과도 즉시 합쳐집니다! (만능 키)', actionType: 'DROP', effectId: 'JOKER', scale: 0.35
     },
     {
         id: 105, name: 'Fed Stimulus', radius: 45, color: '#FCD34D', score: 0, label: '🏛️', texture: '/assets/etf_fed.svg',
-        tier: 'Mythic', description: '모든 주식의 단계를 한 단계 올려버립니다! (대폭등)', actionType: 'DROP', effectId: 'FED', scale: 0.3
+        tier: 'Mythic', description: '모든 주식의 단계를 한 단계 올려버립니다! (대폭등)', actionType: 'DROP', effectId: 'FED', scale: 0.45
     },
     // NEW ONES
     {
@@ -78,7 +78,7 @@ const BASE_ETFS: GameSymbol[] = [
     },
     {
         id: 207, name: '공매도 폭격 (Short Bomb)', radius: 40, color: '#1F2937', score: 0, label: '💣',
-        tier: 'Epic', description: '떨어뜨리면 폭발하여 주변 주식을 날려버립니다.', actionType: 'DROP', effectId: 'BOMB', scale: 0.3
+        tier: 'Epic', description: '떨어뜨리면 폭발하여 주변 주식을 날려버립니다.', actionType: 'DROP', effectId: 'BOMB', scale: 0.4
     },
     {
         id: 208, name: '상장 폐지 (Delisting)', radius: 0, color: '#991B1B', score: 0, label: '🚫',
