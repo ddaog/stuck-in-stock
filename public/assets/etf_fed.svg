@@ -1,0 +1,11 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCD34D" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="95" fill="url(#goldGrad)" stroke="white" stroke-width="5" />
+  <text x="100" y="115" font-family="Arial" font-size="80" text-anchor="middle" fill="white">🏛️</text>
+  <text x="100" y="160" font-family="Arial" font-size="24" text-anchor="middle" fill="white" font-weight="bold">F.E.D</text>
+</svg>

@@ -1,0 +1,9 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="95" fill="#cfd8dc" stroke="black" stroke-width="5"/>
+  <path d="M 60 90 L 80 90" stroke="black" stroke-width="3"/>
+  <path d="M 120 90 L 140 90" stroke="black" stroke-width="3"/>
+  <!-- Hands -->
+  <path d="M 90 120 L 100 100 L 110 120" stroke="black" stroke-width="3" fill="none"/>
+  <!-- Sweat -->
+  <path d="M 50 60 Q 55 70 50 80" stroke="#4fc3f7" stroke-width="3" fill="none"/>
+</svg>

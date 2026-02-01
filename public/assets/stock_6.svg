@@ -1,0 +1,16 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="blur_g">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1"/>
+    </filter>
+  </defs>
+  <circle cx="100" cy="100" r="95" fill="white" stroke="#f2f2f2" stroke-width="1"/>
+  <!-- G Shape with transparency -->
+  <path d="M 100 100 L 145 100 A 45 45 0 1 1 100 55 L 100 80 A 20 20 0 1 0 120 100 L 100 100" fill="#4285F4" opacity="0.9"/>
+  <path d="M 60 85 A 45 45 0 0 1 100 55 L 100 80 A 20 20 0 0 0 75 95 Z" fill="#EA4335" opacity="0.9"/>
+  <path d="M 60 85 A 45 45 0 0 0 80 135 L 95 115 A 20 20 0 0 1 75 95 Z" fill="#FBBC05" opacity="0.9"/>
+  <path d="M 80 135 A 45 45 0 0 0 145 100 L 120 100 A 20 20 0 0 1 95 115 Z" fill="#34A853" opacity="0.9"/>
+  <!-- Overlay Highlight -->
+  <circle cx="100" cy="100" r="95" fill="url(#grad_white)"/>
+  <ellipse cx="70" cy="60" rx="30" ry="15" fill="white" opacity="0.4" transform="rotate(-45 70 60)"/>
+</svg>

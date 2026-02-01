@@ -1,0 +1,21 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow_eye_max">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <circle cx="100" cy="100" r="95" fill="black" stroke="#76B900" stroke-width="2"/>
+  
+  <!-- Nvidia Swirl - Scaled to 2.0x (Max fill) -->
+  <g transform="translate(100, 100) scale(2.0) translate(-100, -100)">
+    <g transform="translate(60, 60) scale(0.4)" fill="#76B900" filter="url(#glow_eye_max)">
+        <path d="M120 0 C 80 0, 40 20, 20 60 C 0 100, 20 140, 60 160 L 70 140 C 40 120, 30 90, 40 60 C 60 30, 90 20, 120 20 L 120 0 Z"/>
+        <path d="M120 40 C 90 40, 70 60, 60 90 C 50 120, 70 140, 90 150 L 100 130 C 90 125, 80 110, 85 90 C 90 70, 105 60, 120 60 L 120 40 Z"/>
+        <circle cx="120" cy="110" r="20" fill="white"/>
+    </g>
+  </g>
+</svg>

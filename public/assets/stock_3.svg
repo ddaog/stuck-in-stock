@@ -1,0 +1,20 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="grad_samsong" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#3B5BDB"/>
+      <stop offset="100%" stop-color="#1428A0"/>
+    </radialGradient>
+    <filter id="jewel_glow">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+      <feMerge>
+          <feMergeNode in="coloredBlur"/>
+          <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <circle cx="100" cy="100" r="95" fill="url(#grad_samsong)"/>
+  <ellipse cx="100" cy="100" rx="85" ry="55" fill="none" stroke="white" stroke-width="3" stroke-opacity="0.8" transform="rotate(-15 100 100)" filter="url(#jewel_glow)"/>
+  <text x="100" y="108" font-family="Arial" font-size="22" text-anchor="middle" fill="white" font-weight="bold" letter-spacing="2">SAMSONG</text>
+  <!-- Gloss -->
+  <path d="M 60 40 Q 100 20 140 40" stroke="white" stroke-width="10" stroke-linecap="round" opacity="0.2"/>
+</svg>
