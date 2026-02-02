@@ -176,15 +176,22 @@ function App() {
     return () => window.removeEventListener('game-over', handler);
   }, [adDangerCount]);
 
+  const [dangerTimer, setDangerTimer] = useState(0);
+
   // Danger Level Listener
   useEffect(() => {
     const handler = (e: Event) => {
-      const lvl = (e as CustomEvent).detail.level;
-      setDangerLevel(lvl);
+      const detail = (e as CustomEvent).detail;
+      setDangerLevel(detail.level);
+      setDangerTimer(detail.timer || 0);
     };
     window.addEventListener('danger-level', handler);
     return () => window.removeEventListener('danger-level', handler);
   }, []);
+
+  // ... (existing effects)
+
+
 
 
   // Particle Logic
@@ -328,10 +335,17 @@ function App() {
 
         {/* Main Game */}
         <div className="absolute inset-0 z-0 pt-[100px] pb-[40px]">
-          {/* DANGER OVERLAY (Dynamic) */}
-          <div className={`absolute top-0 left-0 w-full h-[300px] bg-gradient-to-b from-red-500/50 to-transparent pointer-events-none transition-opacity duration-500 z-10
-                ${dangerLevel === 2 ? 'opacity-60 animate-pulse' : dangerLevel === 1 ? 'opacity-30' : 'opacity-0'}
-             `} />
+          {/* DANGER OVERLAY & TIMER */}
+          <div className={`absolute top-0 left-0 w-full h-[200px] bg-gradient-to-b from-red-600/40 to-transparent pointer-events-none transition-opacity duration-300 z-20 flex justify-center pt-8
+                      ${dangerLevel > 0 ? 'opacity-100' : 'opacity-0'}
+                   `}>
+            {dangerTimer > 0 && (
+              <div className="text-center animate-pulse">
+                <div className="text-white font-black text-4xl drop-shadow-md">{Math.ceil(dangerTimer)}</div>
+                <div className="text-white text-xs font-bold uppercase tracking-widest mt-1">Danger</div>
+              </div>
+            )}
+          </div>
 
           {/* Danger Line (Static Visual) */}
           <div className="absolute top-[150px] left-0 w-full z-0 border-b-2 border-red-500/30 border-dashed pointer-events-none flex justify-end px-2">
@@ -428,7 +442,7 @@ function App() {
 
         {/* Version Indicator */}
         <div className="absolute bottom-1 left-2 text-[10px] text-gray-400 font-mono opacity-50 pointer-events-none z-50">
-          v1.2.1
+          v1.2.2
         </div>
 
         {/* Game Over Modal */}

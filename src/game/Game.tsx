@@ -17,6 +17,16 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
     const runnerRef = useRef<Matter.Runner | null>(null);
     const groundRef = useRef<Matter.Body | null>(null);
 
+    // Timer Ref for Danger Zone
+    const dangerTimerRef = useRef(0);
+    const DANGER_LINE_Y = 150;
+
+    // GameState Ref for closure access
+    const gameStateRef = useRef(gameState);
+    useEffect(() => {
+        gameStateRef.current = gameState;
+    }, [gameState]);
+
     // Interaction Mode State
     const [interactionMode, setInteractionMode] = useState<GameSymbol | null>(null);
 
@@ -129,7 +139,6 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                     bodies.forEach(b => Matter.Body.setStatic(b, false));
                 }, 3000);
                 break;
-            // Add others as needed
         }
     };
 
@@ -179,10 +188,6 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                     const idA = parseInt(bodyA.label.split('_')[1]);
                     const idB = parseInt(bodyB.label.split('_')[1]);
 
-                    // Handle Drop-Type ETFs (Bear, Bull, Split, Joker... these are spawned as bodies)
-                    // If one of them is an ETF ID (>= 100), trigger logic.
-                    // This logic is mostly same as before, I'll condense it.
-
                     const handleEtfCollision = (etfId: number, etfBody: Matter.Body, targetId: number, targetBody: Matter.Body) => {
                         // Bear
                         if (etfId === 101 && targetId <= 1) {
@@ -224,14 +229,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                         }
                         // Fed
                         if (etfId === 105 && targetId < 4) {
-                            World.remove(world, targetBody); // Just remove target? No feeding upgrades all.
-                            // Fed logic was: Remove Fed -> Upgrade ALL small bodies.
-                            // But collision happens pair by pair.
-                            // Better: On first collision, Fed triggers its effect globally and disappears.
                             World.remove(world, etfBody);
-                            executeGlobalEffect({ effectId: 'FED' } as GameSymbol);
-                            // Wait, I need to implement FED in executeGlobalEffect or here.
-                            // Implementing here for legacy parity:
                             const bodies = Composite.allBodies(world).filter(b => b.label.startsWith('symbol_'));
                             bodies.forEach(b => {
                                 const bId = parseInt(b.label.split('_')[1]);
@@ -250,7 +248,6 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                         if (etfId === 207) {
                             World.remove(world, [etfBody, targetBody]);
                             createExplosion(etfBody.position.x, etfBody.position.y, '#000');
-                            // Push away neighbors
                             const bodies = Composite.allBodies(world).filter(b => b.label.startsWith('symbol_'));
                             bodies.forEach(b => {
                                 const dx = b.position.x - etfBody.position.x;
@@ -283,44 +280,47 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
             }
         });
 
+        // Danger Timer Logic
+        const checkDanger = () => {
+            const currentGameState = gameStateRef.current;
+            if (currentGameState !== GAME_STATES.PLAYING) return;
+
+            const bodies = Composite.allBodies(world).filter(b => b.label.startsWith('symbol_'));
+            // Stable bodies (low velocity) are risky.
+            // Also include all bodies? If we just drop one, it might be high.
+            // We generally only count "settled" bodies or use a looser Y check.
+            // Let's filter for velocity.
+            const stableBodies = bodies.filter(b => Math.abs(b.velocity.y) < 1.0);
+
+            const isOverflowing = stableBodies.some(b => b.position.y < DANGER_LINE_Y);
+
+            if (isOverflowing) {
+                dangerTimerRef.current += 1000 / 60; // 16ms
+                if (dangerTimerRef.current > 5000) {
+                    window.dispatchEvent(new Event('game-over'));
+                    _setGameState(GAME_STATES.GAME_OVER);
+                }
+            } else {
+                dangerTimerRef.current = 0;
+            }
+
+            // Emit visual update
+            // Level 2 if > 2s, Level 1 if overflowing.
+            const level = isOverflowing ? (dangerTimerRef.current > 2000 ? 2 : 1) : 0;
+            window.dispatchEvent(new CustomEvent('danger-level', {
+                detail: {
+                    level,
+                    timer: isOverflowing ? (5000 - dangerTimerRef.current) / 1000 : 0
+                }
+            }));
+        };
+
+        Events.on(engine, 'afterUpdate', checkDanger);
+
         Render.run(render);
         const runner = Runner.create();
         runnerRef.current = runner;
         Runner.run(runner, engine);
-
-        // Danger Zone Logic
-        Events.on(engine, 'afterUpdate', () => {
-            const bodies = Composite.allBodies(world).filter(b => b.label.startsWith('symbol_'));
-            if (bodies.length === 0) {
-                window.dispatchEvent(new CustomEvent('danger-level', { detail: { level: 0 } }));
-                return;
-            }
-
-            // Filter: Ignore bodies that are falling fast (velocity.y > 5) when determining visual danger
-            // This prevents the 'just dropped' item from flashing the screen red.
-            const stableBodies = bodies.filter(b => b.velocity.y < 5);
-
-            let minY = height;
-            // Use stableBodies for visual warning
-            stableBodies.forEach(b => { if (b.position.y < minY) minY = b.position.y; });
-
-            const dangerThreshold = 250;
-            const criticalThreshold = 150;
-
-            let level = 0;
-            if (minY < criticalThreshold) level = 2; // Critical
-            else if (minY < dangerThreshold) level = 1; // Warning
-
-            window.dispatchEvent(new CustomEvent('danger-level', { detail: { level } }));
-
-            // Game Over Check (Must still check ALL bodies, but with velocity constraint)
-            // 'overflowing' detects if something is STUCK at the top.
-            const overflowing = bodies.some(b => b.position.y < 120 && Math.abs(b.velocity.y) < 0.2);
-            if (overflowing) {
-                window.dispatchEvent(new Event('game-over'));
-                _setGameState(GAME_STATES.GAME_OVER);
-            }
-        });
 
         return () => {
             Render.stop(render);
@@ -330,24 +330,17 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
         };
     }, []);
 
-    // Pointer Handler (Drop & Interaction)
+    // Pointer Handler
     const handlePointerDown = (e: React.PointerEvent) => {
         if (!engineRef.current || gameState !== GAME_STATES.PLAYING) return;
 
-        const x = e.clientX;
         const rect = sceneRef.current?.getBoundingClientRect();
         if (!rect) return;
-        // Adjust X to relative canvas if needed (assuming full width container)
-        // If container is max-w, e.clientX is global.
-        // We track dropPosition in logic, here we need actual canvas X.
-        // Actually, sceneRef is `w-full h-full`.
+        const x = e.clientX;
 
         if (interactionMode) {
-            // Find body
-            // Need Y coordinate relative to canvas
             const y = e.clientY - rect.top;
             const relativeX = e.clientX - rect.left;
-
             const bodies = Matter.Composite.allBodies(engineRef.current.world);
             const clicked = Matter.Query.point(bodies, { x: relativeX, y });
             const target = clicked.find(b => b.label.startsWith('symbol_'));
@@ -377,7 +370,6 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
         const width = sceneRef.current?.clientWidth || window.innerWidth;
         const rect = sceneRef.current?.getBoundingClientRect();
         const relativeX = clientX - (rect?.left || 0);
-
         const clampedX = Math.max(30, Math.min(width - 30, relativeX));
 
         const body = Matter.Bodies.circle(clampedX, 30, currentSymbol.radius, {
@@ -398,8 +390,9 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                 onNextItemUpdate(etfQueueRef.current);
                 etfQueueRef.current = null;
             } else {
-                setNextSymbol(getRandomSymbol());
-                onNextItemUpdate(getRandomSymbol());
+                const next = getRandomSymbol();
+                setNextSymbol(next);
+                onNextItemUpdate(next);
             }
             setCanDrop(true);
         }, 600);
@@ -415,12 +408,15 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
     useEffect(() => {
         const handler = () => {
             if (!engineRef.current) return;
-            // Clear all
             const bodies = Matter.Composite.allBodies(engineRef.current.world);
             const gameBodies = bodies.filter(b => b.label.startsWith('symbol_'));
             Matter.World.remove(engineRef.current.world, gameBodies);
             setCanDrop(true);
             setInteractionMode(null);
+
+            dangerTimerRef.current = 0;
+            window.dispatchEvent(new CustomEvent('danger-level', { detail: { level: 0, timer: 0 } }));
+
             _setGameState(GAME_STATES.PLAYING);
         };
         window.addEventListener('restart-game', handler);
@@ -434,6 +430,12 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
             onPointerMove={handlePointerMove}
         >
             <div ref={sceneRef} className="w-full h-full" />
+
+            {/* Danger Line */}
+            <div className="absolute left-0 w-full border-b-2 border-red-500/50 border-dashed pointer-events-none z-10"
+                style={{ top: '150px' }}>
+                <span className="absolute right-2 -top-6 text-red-500/70 text-xs font-bold">DANGER ZONE</span>
+            </div>
 
             {/* Interaction Overlay */}
             {interactionMode && (
