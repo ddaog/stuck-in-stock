@@ -78,7 +78,8 @@ const BASE_ETFS: GameSymbol[] = [
     },
     {
         id: 207, name: '공매도 폭격 (Short Bomb)', radius: 40, color: '#1F2937', score: 0, label: '💣',
-        tier: 'Epic', description: '떨어뜨리면 폭발하여 주변 주식을 날려버립니다.', actionType: 'DROP', effectId: 'BOMB', scale: 0.4
+        tier: 'Epic', description: '떨어뜨리면 폭발하여 주변 주식을 날려버립니다.', actionType: 'DROP', effectId: 'BOMB', scale: 0.4,
+        texture: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSI1MCUiIHg9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRyYWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iODAiPvCfkow8L3RleHQ+PC9zdmc+'
     },
     {
         id: 208, name: '상장 폐지 (Delisting)', radius: 0, color: '#991B1B', score: 0, label: '🚫',

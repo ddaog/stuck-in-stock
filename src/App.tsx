@@ -294,7 +294,8 @@ function App() {
               </button>
 
               {/* Next Box */}
-              <div className="glass-panel rounded-2xl p-2 flex flex-col items-center w-[64px]">
+              <div
+                className="glass-panel rounded-2xl p-2 flex flex-col items-center w-[64px]">
                 <span className="text-[10px] text-[#8B95A1] font-bold mb-1 tracking-wider">NEXT</span>
                 <div
                   className="w-10 h-10 rounded-full flex items-center justify-center text-lg overflow-hidden shadow-inner bg-white/50"
@@ -442,7 +443,7 @@ function App() {
 
         {/* Version Indicator */}
         <div className="absolute bottom-1 left-2 text-[10px] text-gray-400 font-mono opacity-50 pointer-events-none z-50">
-          v1.2.2
+          v1.2.3 ({new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})
         </div>
 
         {/* Game Over Modal */}
