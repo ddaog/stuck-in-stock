@@ -19,6 +19,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
 
     // Timer Ref for Danger Zone
     const dangerTimerRef = useRef(0);
+    const isGameOverTriggeredRef = useRef(false); // Validated: Prevent multi-triggers
     const DANGER_LINE_Y = 150;
 
     // GameState Ref for closure access
@@ -283,7 +284,18 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
         // Danger Timer Logic
         const checkDanger = () => {
             const currentGameState = gameStateRef.current;
-            if (currentGameState !== GAME_STATES.PLAYING) return;
+            // Check Game Over state OR Grace Period
+            if (currentGameState !== GAME_STATES.PLAYING ||
+                isGameOverTriggeredRef.current ||
+                Date.now() < gracePeriodRef.current) {
+
+                // If in grace period, force timer to 0 to be safe
+                if (Date.now() < gracePeriodRef.current) {
+                    dangerTimerRef.current = 0;
+                    window.dispatchEvent(new CustomEvent('danger-level', { detail: { level: 0, timer: 0 } }));
+                }
+                return;
+            }
 
             const bodies = Composite.allBodies(world).filter(b => b.label.startsWith('symbol_'));
             // Stable bodies (low velocity) are risky.
@@ -297,6 +309,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
             if (isOverflowing) {
                 dangerTimerRef.current += 1000 / 60; // 16ms
                 if (dangerTimerRef.current > 5000) {
+                    isGameOverTriggeredRef.current = true;
                     window.dispatchEvent(new Event('game-over'));
                     _setGameState(GAME_STATES.GAME_OVER);
                 }
@@ -404,23 +417,48 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
         if (rect) setDropPosition(e.clientX - rect.left);
     };
 
-    // Restart Listener
+    // Grace Period Ref (Invincibility)
+    const gracePeriodRef = useRef(0);
+
+    // Restart & Resume Listener
     useEffect(() => {
-        const handler = () => {
+        const restartHandler = () => {
             if (!engineRef.current) return;
             const bodies = Matter.Composite.allBodies(engineRef.current.world);
-            const gameBodies = bodies.filter(b => b.label.startsWith('symbol_'));
+            const gameBodies = bodies.filter(b => b.label.includes('symbol_'));
             Matter.World.remove(engineRef.current.world, gameBodies);
             setCanDrop(true);
             setInteractionMode(null);
 
             dangerTimerRef.current = 0;
+            isGameOverTriggeredRef.current = false;
+            gracePeriodRef.current = 0;
             window.dispatchEvent(new CustomEvent('danger-level', { detail: { level: 0, timer: 0 } }));
+
+            // Reset Symbols
+            const initNext = getRandomSymbol();
+            setCurrentSymbol(SYMBOLS[0]);
+            setNextSymbol(initNext);
+            onNextItemUpdate(initNext);
 
             _setGameState(GAME_STATES.PLAYING);
         };
-        window.addEventListener('restart-game', handler);
-        return () => window.removeEventListener('restart-game', handler);
+
+        const resumeHandler = () => {
+            // Give 3 seconds of invincibility
+            gracePeriodRef.current = Date.now() + 3000;
+            dangerTimerRef.current = 0;
+            isGameOverTriggeredRef.current = false;
+            window.dispatchEvent(new CustomEvent('danger-level', { detail: { level: 0, timer: 0 } }));
+            _setGameState(GAME_STATES.PLAYING);
+        };
+
+        window.addEventListener('restart-game', restartHandler);
+        window.addEventListener('resume-game', resumeHandler);
+        return () => {
+            window.removeEventListener('restart-game', restartHandler);
+            window.removeEventListener('resume-game', resumeHandler);
+        };
     }, []);
 
     return (
