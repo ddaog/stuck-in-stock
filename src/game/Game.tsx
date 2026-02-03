@@ -40,6 +40,10 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
 
     // Helpers
     const getRandomSymbol = () => SYMBOLS[Math.floor(Math.random() * 4)];
+    const getScore = (body: Matter.Body) => {
+        const id = parseInt(body.label.split('_')[1]);
+        return SYMBOLS.find(s => s.id === id)?.score || 0;
+    };
 
     // Drop Logic
     const dropItem = (clientX: number) => {
@@ -132,7 +136,13 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                 // Remove 5 lowest (highest Y) bodies
                 const sorted = [...bodies].sort((a, b) => b.position.y - a.position.y);
                 const toRemove = sorted.slice(0, 5);
-                toRemove.forEach(b => createExplosion(b.position.x, b.position.y, b.render.fillStyle?.toString() || '#fff'));
+                let buybackScore = 0;
+                toRemove.forEach(b => {
+                    const s = getScore(b);
+                    buybackScore += s;
+                    createExplosion(b.position.x, b.position.y, b.render.fillStyle?.toString() || '#fff', s);
+                });
+                onScoreUpdate(buybackScore);
                 Matter.World.remove(world, toRemove);
                 break;
             case 'SHUFFLE':
@@ -148,7 +158,13 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                 // Remove items in bottom half
                 const midH = window.innerHeight / 2;
                 const bottomOnes = bodies.filter(b => b.position.y > midH);
-                bottomOnes.forEach(b => createExplosion(b.position.x, b.position.y, '#f00'));
+                let delistScore = 0;
+                bottomOnes.forEach(b => {
+                    const s = getScore(b);
+                    delistScore += s;
+                    createExplosion(b.position.x, b.position.y, '#f00', s);
+                });
+                onScoreUpdate(delistScore);
                 Matter.World.remove(world, bottomOnes);
                 break;
             case 'BUBBLE':
@@ -242,13 +258,18 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                         // Bear
                         if (etfId === 101 && targetId <= 1) {
                             World.remove(world, [etfBody, targetBody]);
-                            createExplosion(etfBody.position.x, etfBody.position.y, '#3B82F6', 0);
+                            const s = getScore(targetBody);
+                            onScoreUpdate(s);
+                            createExplosion(etfBody.position.x, etfBody.position.y, '#3B82F6', 0); // ETF explosion
+                            createExplosion(targetBody.position.x, targetBody.position.y, '#3B82F6', s); // Target score
                         }
                         // Bull
                         if (etfId === 102 && targetId <= 2) {
                             World.remove(world, targetBody);
                             Matter.Body.scale(etfBody, 1.1, 1.1);
-                            createExplosion(targetBody.position.x, targetBody.position.y, '#EF4444', 0);
+                            const s = getScore(targetBody);
+                            onScoreUpdate(s);
+                            createExplosion(targetBody.position.x, targetBody.position.y, '#EF4444', s);
                         }
                         // Split
                         if (etfId === 103) {
@@ -297,7 +318,10 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                         // Short Bomb (New)
                         if (etfId === 207) {
                             World.remove(world, [etfBody, targetBody]);
+                            const s = getScore(targetBody);
+                            onScoreUpdate(s);
                             createExplosion(etfBody.position.x, etfBody.position.y, '#000', 0);
+                            createExplosion(targetBody.position.x, targetBody.position.y, '#000', s);
                             const bodies = Composite.allBodies(world).filter(b => b.label.startsWith('symbol_'));
                             bodies.forEach(b => {
                                 const dx = b.position.x - etfBody.position.x;
@@ -410,12 +434,20 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
             if (target) {
                 if (interactionMode.effectId === 'REMOVE_SINGLE') {
                     Matter.World.remove(engineRef.current.world, target);
-                    createExplosion(target.position.x, target.position.y, '#f00');
+                    const s = getScore(target);
+                    onScoreUpdate(s);
+                    createExplosion(target.position.x, target.position.y, '#f00', s);
                 } else if (interactionMode.effectId === 'REMOVE_TYPE') {
                     const label = target.label;
                     const targets = bodies.filter(b => b.label === label);
+                    let removeScore = 0;
+                    targets.forEach(b => {
+                        const s = getScore(b);
+                        removeScore += s;
+                        createExplosion(b.position.x, b.position.y, '#f00', s);
+                    });
+                    onScoreUpdate(removeScore);
                     Matter.World.remove(engineRef.current.world, targets);
-                    targets.forEach(b => createExplosion(b.position.x, b.position.y, '#f00'));
                 }
                 setInteractionMode(null);
             }
