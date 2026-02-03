@@ -35,9 +35,45 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
     const [currentSymbol, setCurrentSymbol] = useState<GameSymbol>(SYMBOLS[0]);
     const [nextSymbol, setNextSymbol] = useState<GameSymbol>(SYMBOLS[0]);
     const [canDrop, setCanDrop] = useState(true);
+    const [dropPosition, setDropPosition] = useState(window.innerWidth / 2);
+    const gracePeriodRef = useRef(0);
 
     // Helpers
     const getRandomSymbol = () => SYMBOLS[Math.floor(Math.random() * 4)];
+
+    // Drop Logic
+    const dropItem = (clientX: number) => {
+        if (!engineRef.current) return;
+        const width = sceneRef.current?.clientWidth || window.innerWidth;
+        const rect = sceneRef.current?.getBoundingClientRect();
+        const relativeX = clientX - (rect?.left || 0);
+        const clampedX = Math.max(30, Math.min(width - 30, relativeX));
+
+        const body = Matter.Bodies.circle(clampedX, 30, currentSymbol.radius, {
+            label: `dropping_symbol_${currentSymbol.id}`,
+            restitution: PHYSICS_CONFIG.RESTITUTION, friction: PHYSICS_CONFIG.FRICTION,
+            render: {
+                fillStyle: currentSymbol.color,
+                sprite: currentSymbol.texture ? { texture: currentSymbol.texture, xScale: currentSymbol.scale || 1, yScale: currentSymbol.scale || 1 } : undefined
+            }
+        });
+        Matter.World.add(engineRef.current.world, body);
+        setCanDrop(false);
+
+        setTimeout(() => {
+            setCurrentSymbol(nextSymbol);
+            if (etfQueueRef.current) {
+                setNextSymbol(etfQueueRef.current);
+                onNextItemUpdate(etfQueueRef.current);
+                etfQueueRef.current = null;
+            } else {
+                const next = getRandomSymbol();
+                setNextSymbol(next);
+                onNextItemUpdate(next);
+            }
+            setCanDrop(true);
+        }, 600);
+    };
 
     // ETF Queue for 'DROP' type
     const etfQueueRef = useRef<GameSymbol | null>(null);
@@ -362,7 +398,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
 
         const rect = sceneRef.current?.getBoundingClientRect();
         if (!rect) return;
-        const x = e.clientX;
+        // const x = e.clientX;
 
         if (interactionMode) {
             const y = e.clientY - rect.top;
@@ -386,42 +422,9 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
             return;
         }
 
-        if (canDrop) dropItem(x);
-    };
-
-    // Drop Logic
-    const [dropPosition, setDropPosition] = useState(window.innerWidth / 2);
-    const dropItem = (clientX: number) => {
-        if (!engineRef.current) return;
-        const width = sceneRef.current?.clientWidth || window.innerWidth;
-        const rect = sceneRef.current?.getBoundingClientRect();
-        const relativeX = clientX - (rect?.left || 0);
-        const clampedX = Math.max(30, Math.min(width - 30, relativeX));
-
-        const body = Matter.Bodies.circle(clampedX, 30, currentSymbol.radius, {
-            label: `dropping_symbol_${currentSymbol.id}`,
-            restitution: PHYSICS_CONFIG.RESTITUTION, friction: PHYSICS_CONFIG.FRICTION,
-            render: {
-                fillStyle: currentSymbol.color,
-                sprite: currentSymbol.texture ? { texture: currentSymbol.texture, xScale: currentSymbol.scale || 1, yScale: currentSymbol.scale || 1 } : undefined
-            }
-        });
-        Matter.World.add(engineRef.current.world, body);
-        setCanDrop(false);
-
-        setTimeout(() => {
-            setCurrentSymbol(nextSymbol);
-            if (etfQueueRef.current) {
-                setNextSymbol(etfQueueRef.current);
-                onNextItemUpdate(etfQueueRef.current);
-                etfQueueRef.current = null;
-            } else {
-                const next = getRandomSymbol();
-                setNextSymbol(next);
-                onNextItemUpdate(next);
-            }
-            setCanDrop(true);
-        }, 600);
+        // Update aim position only
+        const relativeX = e.clientX - rect.left;
+        setDropPosition(relativeX);
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
@@ -430,55 +433,18 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
         if (rect) setDropPosition(e.clientX - rect.left);
     };
 
-    // Grace Period Ref (Invincibility)
-    const gracePeriodRef = useRef(0);
-
-    // Restart & Resume Listener
-    useEffect(() => {
-        const restartHandler = () => {
-            if (!engineRef.current) return;
-            const bodies = Matter.Composite.allBodies(engineRef.current.world);
-            const gameBodies = bodies.filter(b => b.label.includes('symbol_'));
-            Matter.World.remove(engineRef.current.world, gameBodies);
-            setCanDrop(true);
-            setInteractionMode(null);
-
-            dangerTimerRef.current = 0;
-            isGameOverTriggeredRef.current = false;
-            gracePeriodRef.current = 0;
-            window.dispatchEvent(new CustomEvent('danger-level', { detail: { level: 0, timer: 0 } }));
-
-            // Reset Symbols
-            const initNext = getRandomSymbol();
-            setCurrentSymbol(SYMBOLS[0]);
-            setNextSymbol(initNext);
-            onNextItemUpdate(initNext);
-
-            _setGameState(GAME_STATES.PLAYING);
-        };
-
-        const resumeHandler = () => {
-            // Give 3 seconds of invincibility
-            gracePeriodRef.current = Date.now() + 3000;
-            dangerTimerRef.current = 0;
-            isGameOverTriggeredRef.current = false;
-            window.dispatchEvent(new CustomEvent('danger-level', { detail: { level: 0, timer: 0 } }));
-            _setGameState(GAME_STATES.PLAYING);
-        };
-
-        window.addEventListener('restart-game', restartHandler);
-        window.addEventListener('resume-game', resumeHandler);
-        return () => {
-            window.removeEventListener('restart-game', restartHandler);
-            window.removeEventListener('resume-game', resumeHandler);
-        };
-    }, []);
+    const handlePointerUp = (e: React.PointerEvent) => {
+        if (!engineRef.current || gameState !== GAME_STATES.PLAYING) return;
+        if (interactionMode) return;
+        if (canDrop) dropItem(e.clientX);
+    };
 
     return (
         <div
             className={`relative w-full h-full bg-slate-50 touch-none select-none outline-none ${interactionMode ? 'cursor-crosshair' : ''}`}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
         >
             <div ref={sceneRef} className="w-full h-full" />
 
