@@ -136,6 +136,10 @@ function App() {
       // Let's trigger 'BUYBACK' effect.
       const rescueEtf = ETFS.find(e => e.effectId === 'BUYBACK') || ETFS[0];
       window.dispatchEvent(new CustomEvent('trigger-etf-effect', { detail: { etf: rescueEtf } }));
+
+      // Dispatch Resume event (Reset Game.tsx flags)
+      window.dispatchEvent(new Event('resume-game'));
+
       setGameState(GAME_STATES.PLAYING);
     }
   };
