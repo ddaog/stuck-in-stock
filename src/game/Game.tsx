@@ -185,7 +185,20 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
             for (const pair of pairs) {
                 const bodyA = pair.bodyA;
                 const bodyB = pair.bodyB;
-                if (bodyA.label.startsWith('symbol_') && bodyB.label.startsWith('symbol_')) {
+
+                // Handle Dropping State: Only activate if hitting Ground or another Symbol (not side walls)
+                if (bodyA.label.startsWith('dropping_')) {
+                    if (bodyB === groundRef.current || bodyB.label.includes('symbol_')) {
+                        bodyA.label = bodyA.label.replace('dropping_', '');
+                    }
+                }
+                if (bodyB.label.startsWith('dropping_')) {
+                    if (bodyA === groundRef.current || bodyA.label.includes('symbol_')) {
+                        bodyB.label = bodyB.label.replace('dropping_', '');
+                    }
+                }
+
+                if (bodyA.label.includes('symbol_') && bodyB.label.includes('symbol_')) {
                     const idA = parseInt(bodyA.label.split('_')[1]);
                     const idB = parseInt(bodyB.label.split('_')[1]);
 
