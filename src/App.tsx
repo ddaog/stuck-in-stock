@@ -207,8 +207,8 @@ function App() {
             ...p,
             x: p.x + p.velocity.x,
             y: p.y + p.velocity.y,
-            life: p.life - 0.05,
-            velocity: { x: p.velocity.x, y: p.velocity.y + 0.2 }
+            life: p.life - 0.02, // Slower fade for text
+            velocity: { x: p.velocity.x, y: p.velocity.y * 0.95 } // Friction/Decay for movement
           }))
           .filter(p => p.life > 0);
         setParticles([...particlesRef.current]);
@@ -223,23 +223,42 @@ function App() {
   useEffect(() => {
     const mergeHandler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      const newParticles: Particle[] = [];
-      const particleCount = detail.color === '#FFD700' ? 20 : 8; // More for Gold/Fed
-      for (let i = 0; i < particleCount; i++) {
-        newParticles.push({
+      const score = detail.score || 0;
+
+      // If it's a scoring event (Merge), show Floating Text
+      if (score > 0) {
+        const newParticle: Particle = {
           id: Math.random(),
           x: detail.x,
-          y: detail.y + 50,
-          color: detail.color,
-          symbol: ['$', '₩', '📈', '🚀', '💎'][Math.floor(Math.random() * 5)],
-          life: 1.0,
+          y: detail.y,  // Start at event location
+          color: '#10B981', // Emerald Green for money
+          symbol: `+$${score.toLocaleString()}`, // Text content
+          life: 1.5,      // Longer life for text
           velocity: {
-            x: (Math.random() - 0.5) * 15, // Faster spread
-            y: (Math.random() - 0.5) * 15 - 5
+            x: 0,
+            y: -2 // Float UP
           }
-        });
+        };
+        particlesRef.current = [...particlesRef.current, newParticle];
+      } else {
+        // Non-scoring explosion (e.g. Remove), just a small puff or nothing?
+        // User asked to replace effect with "How many dollars".
+        // If there is no dollars, maybe just a small visual POP?
+        // Let's keep a minimal effect for non-scoring actions to provide feedback
+        const newParticles: Particle[] = [];
+        for (let i = 0; i < 5; i++) {
+          newParticles.push({
+            id: Math.random(),
+            x: detail.x,
+            y: detail.y,
+            color: detail.color,
+            symbol: '💥',
+            life: 0.5,
+            velocity: { x: (Math.random() - 0.5) * 10, y: (Math.random() - 0.5) * 10 }
+          });
+        }
+        particlesRef.current = [...particlesRef.current, ...newParticles];
       }
-      particlesRef.current = [...particlesRef.current, ...newParticles];
     };
 
     window.addEventListener('merge-effect', mergeHandler);
@@ -374,21 +393,20 @@ function App() {
             className="absolute rounded-full pointer-events-none z-20"
             style={{
               left: p.x,
-              top: p.y + 100,
-              width: 20,
-              height: 20,
+              top: p.y, // Removed +100 offset
+              width: 'auto', // Auto width for text
+              height: 30,
               opacity: p.life,
-              transform: `scale(${p.life})`,
-              color: p.symbol === '📈' || p.symbol === '🚀' ? 'red' : '#00E676',
-              textShadow: '0 0 2px black',
-              fontWeight: 'bold',
+              transform: `scale(${1 + (1 - p.life)})`, // Grow slightly as it fades
+              color: p.symbol.startsWith('+') ? '#10B981' : p.color, // Force Green for score
+              textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+              fontWeight: 900,
               fill: 'currentColor',
-              fontSize: '20px',
-              textAlign: 'center',
-              lineHeight: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
+              fontSize: p.symbol.startsWith('+') ? '24px' : '20px', // Larger for score
+              fontFamily: 'monospace',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+              zIndex: 50,
             }}
           >
             {p.symbol}

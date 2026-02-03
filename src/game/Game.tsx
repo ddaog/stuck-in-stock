@@ -179,8 +179,8 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
         }
     };
 
-    const createExplosion = (x: number, y: number, color: string) => {
-        window.dispatchEvent(new CustomEvent('merge-effect', { detail: { x, y, color } }));
+    const createExplosion = (x: number, y: number, color: string, score: number = 0) => {
+        window.dispatchEvent(new CustomEvent('merge-effect', { detail: { x, y, color, score } }));
     };
 
     // --- Matter JS Setup ---
@@ -242,13 +242,13 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                         // Bear
                         if (etfId === 101 && targetId <= 1) {
                             World.remove(world, [etfBody, targetBody]);
-                            createExplosion(etfBody.position.x, etfBody.position.y, '#3B82F6');
+                            createExplosion(etfBody.position.x, etfBody.position.y, '#3B82F6', 0);
                         }
                         // Bull
                         if (etfId === 102 && targetId <= 2) {
                             World.remove(world, targetBody);
                             Matter.Body.scale(etfBody, 1.1, 1.1);
-                            createExplosion(targetBody.position.x, targetBody.position.y, '#EF4444');
+                            createExplosion(targetBody.position.x, targetBody.position.y, '#EF4444', 0);
                         }
                         // Split
                         if (etfId === 103) {
@@ -264,7 +264,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                                 render: { fillStyle: small.color, sprite: small.texture ? { texture: small.texture, xScale: small.scale || 1, yScale: small.scale || 1 } : undefined }
                             });
                             World.add(world, [b1, b2]);
-                            createExplosion(targetBody.position.x, targetBody.position.y, '#A855F7');
+                            createExplosion(targetBody.position.x, targetBody.position.y, '#A855F7', 0);
                         }
                         // Joker
                         if (etfId === 104 && targetId < 10) {
@@ -275,7 +275,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                                 render: { fillStyle: newSym.color, sprite: newSym.texture ? { texture: newSym.texture, xScale: newSym.scale || 1, yScale: newSym.scale || 1 } : undefined }
                             });
                             World.add(world, newB);
-                            createExplosion(targetBody.position.x, targetBody.position.y, '#FF00FF');
+                            createExplosion(targetBody.position.x, targetBody.position.y, '#FF00FF', 0);
                         }
                         // Fed
                         if (etfId === 105 && targetId < 4) {
@@ -297,7 +297,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                         // Short Bomb (New)
                         if (etfId === 207) {
                             World.remove(world, [etfBody, targetBody]);
-                            createExplosion(etfBody.position.x, etfBody.position.y, '#000');
+                            createExplosion(etfBody.position.x, etfBody.position.y, '#000', 0);
                             const bodies = Composite.allBodies(world).filter(b => b.label.startsWith('symbol_'));
                             bodies.forEach(b => {
                                 const dx = b.position.x - etfBody.position.x;
@@ -324,7 +324,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                         });
                         World.add(world, newB);
                         onScoreUpdate(newSym.score);
-                        createExplosion(midX, midY, newSym.color);
+                        createExplosion(midX, midY, newSym.color, newSym.score);
                     }
                 }
             }
