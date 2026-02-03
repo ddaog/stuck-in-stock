@@ -399,7 +399,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
         const clampedX = Math.max(30, Math.min(width - 30, relativeX));
 
         const body = Matter.Bodies.circle(clampedX, 30, currentSymbol.radius, {
-            label: `symbol_${currentSymbol.id}`,
+            label: `dropping_symbol_${currentSymbol.id}`,
             restitution: PHYSICS_CONFIG.RESTITUTION, friction: PHYSICS_CONFIG.FRICTION,
             render: {
                 fillStyle: currentSymbol.color,
