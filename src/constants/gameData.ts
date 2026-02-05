@@ -31,84 +31,68 @@ export const SYMBOLS: GameSymbol[] = [
 // We will use id > 100 for ETFs.
 
 const BASE_ETFS: GameSymbol[] = [
+    // 1. Bear Market (물장) - Panic Sell
     {
-        id: 101, name: '물장 (Bear) ETF', radius: 35, color: '#3B82F6', score: 0, label: '🐻', texture: '/assets/etf_bear.svg',
-        tier: 'Common', description: '가장 작은 주식만 제거합니다. (하락장 방어)', actionType: 'DROP', effectId: 'BEAR', scale: 0.35
+        id: 101, name: '물장 (Bear Market)', radius: 0, color: '#3B82F6', score: 0, label: '', texture: '/assets/etf_bear.svg',
+        tier: 'Common', description: '패닉 셀! 하위 30% 종목을 즉시 매도(삭제)하고 현금화합니다.', actionType: 'GLOBAL', effectId: 'PANIC_SELL', scale: 0.35
     },
+    // 2. Bull Market (불장) - Score Multiplier
     {
-        id: 102, name: '불장 (Bull) ETF', radius: 40, color: '#EF4444', score: 0, label: '🐂', texture: '/assets/etf_bull.svg',
-        tier: 'Rare', description: '주변 주식을 흡수하여 성장합니다!', actionType: 'DROP', effectId: 'BULL', scale: 0.4
+        id: 102, name: '불장 (Bull Market)', radius: 0, color: '#EF4444', score: 0, label: '🔥', texture: '/assets/etf_bull.svg',
+        tier: 'Legendary', description: '15초간 모든 점수 획득량이 2배가 됩니다!', actionType: 'GLOBAL', effectId: 'BULL_MARKET', scale: 0.4
     },
+    // 3. Split (액면분할)
     {
-        id: 103, name: '액면분할 (Split) ETF', radius: 35, color: '#A855F7', score: 0, label: '✂️', texture: '/assets/etf_clone.svg',
+        id: 103, name: '액면분할 (Split)', radius: 35, color: '#A855F7', score: 0, label: '✂️', texture: '/assets/etf_clone.svg',
         tier: 'Epic', description: '주식을 두 개의 하위 단계 주식으로 쪼갭니다.', actionType: 'DROP', effectId: 'SPLIT', scale: 0.35
     },
+    // 4. Joker
     {
         id: 104, name: 'Joker ETF', radius: 35, color: '#FF00FF', score: 0, label: '🃏', texture: '/assets/etf_joker.svg',
         tier: 'Legendary', description: '어떤 주식과도 즉시 합쳐집니다! (만능 키)', actionType: 'DROP', effectId: 'JOKER', scale: 0.35
     },
+    // 5. Super Cycle
     {
-        id: 105, name: 'Fed Stimulus', radius: 45, color: '#FCD34D', score: 0, label: '🏛️', texture: '/assets/etf_fed.svg',
-        tier: 'Mythic', description: '모든 주식의 단계를 한 단계 올려버립니다! (대폭등)', actionType: 'DROP', effectId: 'FED', scale: 0.45
+        id: 200, name: '반도체 슈퍼사이클', radius: 0, color: '#10B981', score: 0, label: '💾',
+        tier: 'Epic', description: '삼성전자(3)와 하이닉스(4)의 가치가 3배 폭등합니다! (20초)', actionType: 'GLOBAL', effectId: 'SUPER_CYCLE'
     },
-    // NEW ONES
-    {
-        id: 201, name: '코인 샤워 (Coin Shower)', radius: 0, color: '#F0C330', score: 0, label: '🌧️',
-        tier: 'Rare', description: '하늘에서 도지코인이 쏟아집니다!', actionType: 'GLOBAL', effectId: 'COIN_SHOWER'
-    },
+    // 6. Sell Single
     {
         id: 202, name: '강제 청산 (Sell Single)', radius: 0, color: '#EF4444', score: 0, label: '🔨',
         tier: 'Common', description: '원하는 주식 하나를 클릭하여 즉시 제거합니다.', actionType: 'INTERACTION', effectId: 'REMOVE_SINGLE'
     },
+    // 8. Sell All
     {
         id: 203, name: '섹터 매도 (Sell All)', radius: 0, color: '#EF4444', score: 0, label: '📉',
         tier: 'Epic', description: '원하는 주식 종류를 클릭하면 해당 종류가 모두 사라집니다.', actionType: 'INTERACTION', effectId: 'REMOVE_TYPE'
     },
+    // 9. Dividend
     {
         id: 204, name: '배당금 (Dividend)', radius: 0, color: '#10B981', score: 0, label: '💰',
         tier: 'Common', description: '즉시 $500을 획득합니다.', actionType: 'GLOBAL', effectId: 'DIVIDEND'
     },
+    // 10. Buyback
     {
         id: 205, name: '자사주 매입 (Buyback)', radius: 0, color: '#2563EB', score: 0, label: '♻️',
         tier: 'Rare', description: '바닥에 있는 주식 5개를 제거합니다.', actionType: 'GLOBAL', effectId: 'BUYBACK'
     },
-    {
-        id: 206, name: '시장 셔플 (Shuffle)', radius: 0, color: '#8B5CF6', score: 0, label: '🌪️',
-        tier: 'Common', description: '시장을 뒤섞어 새로운 기회를 만듭니다.', actionType: 'GLOBAL', effectId: 'SHUFFLE'
-    },
+    // 11. Short Bomb
     {
         id: 207, name: '공매도 폭격 (Short Bomb)', radius: 40, color: '#1F2937', score: 0, label: '💣',
         tier: 'Epic', description: '떨어뜨리면 폭발하여 주변 주식을 날려버립니다.', actionType: 'DROP', effectId: 'BOMB', scale: 0.4,
         texture: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSI1MCUiIHg9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRyYWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iODAiPvCfkow8L3RleHQ+PC9zdmc+'
     },
+    // 12. Delisting
     {
         id: 208, name: '상장 폐지 (Delisting)', radius: 0, color: '#991B1B', score: 0, label: '🚫',
         tier: 'Legendary', description: '화면의 절반(아래쪽)을 날려버립니다.', actionType: 'GLOBAL', effectId: 'DELISTING'
     },
-    {
-        id: 209, name: '유상증자 (Capital Increase)', radius: 0, color: '#60A5FA', score: 0, label: '📈',
-        tier: 'Rare', description: '무작위 주식 3개를 한 단계 업그레이드합니다.', actionType: 'GLOBAL', effectId: 'UPGRADE_RANDOM'
-    },
-    {
-        id: 210, name: '구조조정 (Restructure)', radius: 0, color: '#F59E0B', score: 0, label: '🏗️',
-        tier: 'Rare', description: '무작위 주식 3개를 한 단계 다운그레이드합니다. (소형화)', actionType: 'GLOBAL', effectId: 'DOWNGRADE_RANDOM'
-    },
-    {
-        id: 211, name: 'CEO 교체', radius: 0, color: '#4B5563', score: 0, label: '👔',
-        tier: 'Common', description: '다음 아이템 5개를 좋은 것으로 바꿉니다.', actionType: 'GLOBAL', effectId: 'BETTER_NEXT'
-    },
+    // 13. Blackhole (Fun)
     {
         id: 212, name: '블랙홀 (Blackhole)', radius: 0, color: '#000000', score: 0, label: '⚫',
         tier: 'Epic', description: '중앙으로 모든 주식을 끌어당깁니다.', actionType: 'GLOBAL', effectId: 'BLACKHOLE'
     },
-    {
-        id: 213, name: '서킷 브레이커 (Freeze)', radius: 0, color: '#3B82F6', score: 0, label: '❄️',
-        tier: 'Common', description: '일시적으로 모든 주식의 움직임을 멈춥니다.', actionType: 'GLOBAL', effectId: 'FREEZE'
-    },
-    {
-        id: 214, name: '세무 조사 (Audit)', radius: 0, color: '#DC2626', score: 0, label: '👮',
-        tier: 'Rare', description: '가장 큰 주식 하나를 강제로 분할시킵니다.', actionType: 'GLOBAL', effectId: 'AUDIT'
-    },
+    // 14. Bubble (Fun)
     {
         id: 215, name: '테마주 열풍 (Bubble)', radius: 0, color: '#EC4899', score: 0, label: '🫧',
         tier: 'Legendary', description: '모든 도지코인을 삼성전자로 바꿉니다!', actionType: 'GLOBAL', effectId: 'BUBBLE'

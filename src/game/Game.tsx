@@ -38,12 +38,9 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
     const [dropPosition, setDropPosition] = useState(window.innerWidth / 2);
     const gracePeriodRef = useRef(0);
 
+
     // Helpers
     const getRandomSymbol = () => SYMBOLS[Math.floor(Math.random() * 4)];
-    const getScore = (body: Matter.Body) => {
-        const id = parseInt(body.label.split('_')[1]);
-        return SYMBOLS.find(s => s.id === id)?.score || 0;
-    };
 
     // Drop Logic
     const dropItem = (clientX: number) => {
@@ -82,6 +79,24 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
     // ETF Queue for 'DROP' type
     const etfQueueRef = useRef<GameSymbol | null>(null);
 
+    // Multiplier Refs
+    const scoreMultiplierRef = useRef(1);
+    const stockMultipliersRef = useRef<Map<number, number>>(new Map());
+
+    // Get Dynamic Score (with stock-specific multiplier)
+    const getScore = (body: Matter.Body) => {
+        const id = parseInt(body.label.split('_')[1]);
+        const baseScore = SYMBOLS.find(s => s.id === id)?.score || 0;
+        const stockMult = stockMultipliersRef.current.get(id) || 1;
+        return baseScore * stockMult;
+    };
+
+    const applyScore = (points: number) => {
+        // Global Multiplier (Bull Market)
+        const finalScore = points * scoreMultiplierRef.current;
+        onScoreUpdate(finalScore);
+    };
+
     // --- ETF / Event Handlers ---
     useEffect(() => {
         const handler = (e: Event) => {
@@ -89,15 +104,12 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
             const etf = detail.etf as GameSymbol;
 
             if (etf.actionType === 'DROP') {
-                // Queue for next drop
                 etfQueueRef.current = etf;
                 setNextSymbol(etf);
                 onNextItemUpdate(etf);
             } else if (etf.actionType === 'INTERACTION') {
-                // Enable Interaction Mode
                 setInteractionMode(etf);
             } else if (etf.actionType === 'GLOBAL') {
-                // Execute Immediately
                 executeGlobalEffect(etf);
             }
         };
@@ -111,26 +123,8 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
         const bodies = Matter.Composite.allBodies(world).filter(b => b.label.startsWith('symbol_'));
 
         switch (etf.effectId) {
-            case 'COIN_SHOWER':
-                for (let i = 0; i < 15; i++) {
-                    setTimeout(() => {
-                        const x = Math.random() * window.innerWidth;
-                        const symbol = SYMBOLS[0]; // Doge
-                        const body = Matter.Bodies.circle(x, -50, symbol.radius, {
-                            label: `symbol_${symbol.id}`,
-                            restitution: 0.5,
-                            friction: 0.1,
-                            render: {
-                                fillStyle: symbol.color,
-                                sprite: symbol.texture ? { texture: symbol.texture, xScale: 0.15, yScale: 0.15 } : undefined
-                            }
-                        });
-                        Matter.World.add(world, body);
-                    }, i * 100);
-                }
-                break;
             case 'DIVIDEND':
-                onScoreUpdate(500);
+                applyScore(500);
                 break;
             case 'BUYBACK':
                 // Remove 5 lowest (highest Y) bodies
@@ -142,17 +136,8 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                     buybackScore += s;
                     createExplosion(b.position.x, b.position.y, b.render.fillStyle?.toString() || '#fff', s);
                 });
-                onScoreUpdate(buybackScore);
+                applyScore(buybackScore);
                 Matter.World.remove(world, toRemove);
-                break;
-            case 'SHUFFLE':
-                bodies.forEach(b => {
-                    Matter.Body.setVelocity(b, {
-                        x: (Math.random() - 0.5) * 20,
-                        y: (Math.random() - 0.5) * 20
-                    });
-                    Matter.Body.setAngularVelocity(b, (Math.random() - 0.5) * 0.5);
-                });
                 break;
             case 'DELISTING':
                 // Remove items in bottom half
@@ -164,39 +149,94 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                     delistScore += s;
                     createExplosion(b.position.x, b.position.y, '#f00', s);
                 });
-                onScoreUpdate(delistScore);
+                applyScore(delistScore);
                 Matter.World.remove(world, bottomOnes);
                 break;
             case 'BUBBLE':
-                // Doge (0) -> Samsung (3) ?! Or just upgrade all Doge
+                // Doge (0) Price Bubble x10
+                stockMultipliersRef.current.set(0, 10);
+                window.dispatchEvent(new CustomEvent('global-effect-active', { detail: { type: 'BUBBLE' } }));
+
+                // Visual POP for existing Doges
                 bodies.forEach(b => {
                     const id = parseInt(b.label.split('_')[1]);
                     if (id === 0) {
-                        const targetSym = SYMBOLS[3]; // Samsung
-                        Matter.World.remove(world, b);
-                        const newBody = Matter.Bodies.circle(b.position.x, b.position.y, targetSym.radius, {
-                            label: `symbol_${targetSym.id}`,
-                            restitution: PHYSICS_CONFIG.RESTITUTION,
-                            render: {
-                                fillStyle: targetSym.color,
-                                sprite: targetSym.texture ? { texture: targetSym.texture, xScale: 0.3, yScale: 0.3 } : undefined
-                            }
-                        });
-                        Matter.World.add(world, newBody);
+                        createExplosion(b.position.x, b.position.y, SYMBOLS[0].color, 0); // Visual cue
                     }
                 });
-                break;
-            case 'FREEZE':
-                bodies.forEach(b => Matter.Body.setStatic(b, true));
+
                 setTimeout(() => {
-                    bodies.forEach(b => Matter.Body.setStatic(b, false));
-                }, 3000);
+                    stockMultipliersRef.current.set(0, 1);
+                    window.dispatchEvent(new CustomEvent('global-effect-active', { detail: { type: 'NONE' } }));
+                }, 15000);
+                break;
+
+            case 'PANIC_SELL': // Bear Market
+                // Remove bottom 30%
+                const sortedByY = [...bodies].sort((a, b) => b.position.y - a.position.y); // Highest Y first (bottom)
+                const countToRemove = Math.ceil(bodies.length * 0.3);
+                const panicList = sortedByY.slice(0, countToRemove);
+
+                let panicScore = 0;
+                panicList.forEach(b => {
+                    const s = getScore(b);
+                    panicScore += s;
+                    createExplosion(b.position.x, b.position.y, '#3B82F6', s);
+                });
+                applyScore(panicScore);
+                Matter.World.remove(world, panicList);
+                window.dispatchEvent(new CustomEvent('global-effect-active', { detail: { type: 'BEAR' } }));
+                break;
+
+            case 'BULL_MARKET':
+                scoreMultiplierRef.current = 2;
+                window.dispatchEvent(new CustomEvent('global-effect-active', { detail: { type: 'BULL' } }));
+                setTimeout(() => {
+                    scoreMultiplierRef.current = 1;
+                    window.dispatchEvent(new CustomEvent('global-effect-active', { detail: { type: 'NONE' } }));
+                }, 15000);
+                break;
+
+            case 'SUPER_CYCLE':
+                // Semi Supercycle: Samsung(3), Hynix(4), Tesla(5) x3
+                [3, 4, 5].forEach(id => stockMultipliersRef.current.set(id, 3));
+                window.dispatchEvent(new CustomEvent('global-effect-active', { detail: { type: 'SUPER_CYCLE' } }));
+
+                // Visual cue
+                bodies.forEach(b => {
+                    const id = parseInt(b.label.split('_')[1]);
+                    if ([3, 4, 5].includes(id)) {
+                        createExplosion(b.position.x, b.position.y, SYMBOLS[id].color, 0);
+                    }
+                });
+
+                setTimeout(() => {
+                    [3, 4, 5].forEach(id => stockMultipliersRef.current.set(id, 1));
+                    window.dispatchEvent(new CustomEvent('global-effect-active', { detail: { type: 'NONE' } }));
+                }, 20000); // 20s
+                break;
+
+            case 'BLACKHOLE':
+                // Pull to center
+                const center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+                bodies.forEach(b => {
+                    const dx = center.x - b.position.x;
+                    const dy = center.y - b.position.y;
+                    Matter.Body.applyForce(b, b.position, { x: dx * 0.0005, y: dy * 0.0005 });
+                });
                 break;
         }
     };
 
     const createExplosion = (x: number, y: number, color: string, score: number = 0) => {
-        window.dispatchEvent(new CustomEvent('merge-effect', { detail: { x, y, color, score } }));
+        // Pass multiplier info if needed, or just let App handle simple display
+        // We pass the calculated score to display, so we should check if we want to display raw or multiplied?
+        // Usually visual popups show the actual points earned.
+        // `applyScore` calls `onScoreUpdate` which updates the total.
+        // But `createExplosion` usually shows the text at the spot.
+        // If multiplier is active, we should multiply this value too.
+        const finalS = score * scoreMultiplierRef.current;
+        window.dispatchEvent(new CustomEvent('merge-effect', { detail: { x, y, color, score: finalS } }));
     };
 
     // --- Matter JS Setup ---
@@ -238,7 +278,6 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                 const bodyA = pair.bodyA;
                 const bodyB = pair.bodyB;
 
-                // Handle Dropping State: Only activate if hitting Ground or another Symbol (not side walls)
                 if (bodyA.label.startsWith('dropping_')) {
                     if (bodyB === groundRef.current || bodyB.label.includes('symbol_')) {
                         bodyA.label = bodyA.label.replace('dropping_', '');
@@ -255,22 +294,6 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                     const idB = parseInt(bodyB.label.split('_')[1]);
 
                     const handleEtfCollision = (etfId: number, etfBody: Matter.Body, targetId: number, targetBody: Matter.Body) => {
-                        // Bear
-                        if (etfId === 101 && targetId <= 1) {
-                            World.remove(world, [etfBody, targetBody]);
-                            const s = getScore(targetBody);
-                            onScoreUpdate(s);
-                            createExplosion(etfBody.position.x, etfBody.position.y, '#3B82F6', 0); // ETF explosion
-                            createExplosion(targetBody.position.x, targetBody.position.y, '#3B82F6', s); // Target score
-                        }
-                        // Bull
-                        if (etfId === 102 && targetId <= 2) {
-                            World.remove(world, targetBody);
-                            Matter.Body.scale(etfBody, 1.1, 1.1);
-                            const s = getScore(targetBody);
-                            onScoreUpdate(s);
-                            createExplosion(targetBody.position.x, targetBody.position.y, '#EF4444', s);
-                        }
                         // Split
                         if (etfId === 103) {
                             World.remove(world, [etfBody, targetBody]);
@@ -298,28 +321,11 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                             World.add(world, newB);
                             createExplosion(targetBody.position.x, targetBody.position.y, '#FF00FF', 0);
                         }
-                        // Fed
-                        if (etfId === 105 && targetId < 4) {
-                            World.remove(world, etfBody);
-                            const bodies = Composite.allBodies(world).filter(b => b.label.startsWith('symbol_'));
-                            bodies.forEach(b => {
-                                const bId = parseInt(b.label.split('_')[1]);
-                                if (bId < 4) {
-                                    const up = SYMBOLS[4];
-                                    World.remove(world, b);
-                                    const upB = Matter.Bodies.circle(b.position.x, b.position.y, up.radius, {
-                                        label: `symbol_${up.id}`, restitution: PHYSICS_CONFIG.RESTITUTION, friction: PHYSICS_CONFIG.FRICTION,
-                                        render: { fillStyle: up.color, sprite: up.texture ? { texture: up.texture, xScale: up.scale || 1, yScale: up.scale || 1 } : undefined }
-                                    });
-                                    World.add(world, upB);
-                                }
-                            });
-                        }
-                        // Short Bomb (New)
+                        // Short Bomb
                         if (etfId === 207) {
                             World.remove(world, [etfBody, targetBody]);
                             const s = getScore(targetBody);
-                            onScoreUpdate(s);
+                            applyScore(s);
                             createExplosion(etfBody.position.x, etfBody.position.y, '#000', 0);
                             createExplosion(targetBody.position.x, targetBody.position.y, '#000', s);
                             const bodies = Composite.allBodies(world).filter(b => b.label.startsWith('symbol_'));
@@ -347,7 +353,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                             render: { fillStyle: newSym.color, sprite: newSym.texture ? { texture: newSym.texture, xScale: newSym.scale || 1, yScale: newSym.scale || 1 } : undefined }
                         });
                         World.add(world, newB);
-                        onScoreUpdate(newSym.score);
+                        applyScore(newSym.score);
                         createExplosion(midX, midY, newSym.color, newSym.score);
                     }
                 }
@@ -435,7 +441,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                 if (interactionMode.effectId === 'REMOVE_SINGLE') {
                     Matter.World.remove(engineRef.current.world, target);
                     const s = getScore(target);
-                    onScoreUpdate(s);
+                    applyScore(s);
                     createExplosion(target.position.x, target.position.y, '#f00', s);
                 } else if (interactionMode.effectId === 'REMOVE_TYPE') {
                     const label = target.label;
@@ -446,7 +452,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                         removeScore += s;
                         createExplosion(b.position.x, b.position.y, '#f00', s);
                     });
-                    onScoreUpdate(removeScore);
+                    applyScore(removeScore);
                     Matter.World.remove(engineRef.current.world, targets);
                 }
                 setInteractionMode(null);
