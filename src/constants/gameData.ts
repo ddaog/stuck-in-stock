@@ -43,12 +43,7 @@ const BASE_ETFS: GameSymbol[] = [
         id: 102, name: '불장 (Bull Market)', radius: 0, color: '#EF4444', score: 0, label: '🔥', texture: '/assets/etf_bull.svg',
         tier: 'Legendary', description: '15초간 모든 점수 획득량이 2배가 됩니다!', actionType: 'GLOBAL', effectId: 'BULL_MARKET', scale: 0.34
     },
-    // 3. Split (액면분할)
-    {
-        id: 103, name: '액면분할 (Split)', radius: 30, color: '#A855F7', score: 0, label: '✂️', texture: '/assets/etf_clone.svg',
-        tier: 'Epic', description: '주식을 두 개의 하위 단계 주식으로 쪼갭니다.', actionType: 'DROP', effectId: 'SPLIT', scale: 0.298
-    },
-    // 4. Joker
+    // 3. Joker
     {
         id: 104, name: 'Joker ETF', radius: 30, color: '#FF00FF', score: 0, label: '🃏', texture: '/assets/etf_joker.svg',
         tier: 'Legendary', description: '어떤 주식과도 즉시 합쳐집니다! (만능 키)', actionType: 'DROP', effectId: 'JOKER', scale: 0.298
@@ -89,12 +84,7 @@ const BASE_ETFS: GameSymbol[] = [
         id: 208, name: '상장 폐지 (Delisting)', radius: 0, color: '#991B1B', score: 0, label: '🚫',
         tier: 'Legendary', description: '화면의 절반(아래쪽)을 날려버립니다.', actionType: 'GLOBAL', effectId: 'DELISTING'
     },
-    // 13. Blackhole (Fun)
-    {
-        id: 212, name: '블랙홀 (Blackhole)', radius: 0, color: '#000000', score: 0, label: '⚫',
-        tier: 'Epic', description: '중앙으로 모든 주식을 끌어당깁니다.', actionType: 'GLOBAL', effectId: 'BLACKHOLE'
-    },
-    // 14. Bubble (Fun)
+    // 13. Bubble (Fun)
     {
         id: 215, name: '테마주 열풍 (Bubble)', radius: 0, color: '#EC4899', score: 0, label: '🫧',
         tier: 'Legendary', description: '모든 도지코인을 삼성전자로 바꿉니다!', actionType: 'GLOBAL', effectId: 'BUBBLE'

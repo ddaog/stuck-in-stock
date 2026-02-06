@@ -427,16 +427,6 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                     window.dispatchEvent(new CustomEvent('global-effect-active', { detail: { type: 'NONE' } }));
                 }, 10000); // 10s
                 break;
-
-            case 'BLACKHOLE':
-                // Pull to center
-                const center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-                bodies.forEach(b => {
-                    const dx = center.x - b.position.x;
-                    const dy = center.y - b.position.y;
-                    Matter.Body.applyForce(b, b.position, { x: dx * 0.0005, y: dy * 0.0005 });
-                });
-                break;
         }
     };
 
@@ -506,22 +496,6 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                     const idB = parseInt(bodyB.label.split('_')[1]);
 
                     const handleEtfCollision = (etfId: number, etfBody: Matter.Body, targetId: number, targetBody: Matter.Body) => {
-                        // Split
-                        if (etfId === 103) {
-                            World.remove(world, [etfBody, targetBody]);
-                            if (targetId === 0) return;
-                            const small = SYMBOLS[targetId - 1];
-                            const b1 = Matter.Bodies.circle(targetBody.position.x - 20, targetBody.position.y, small.radius, {
-                                label: `symbol_${small.id}`, restitution: PHYSICS_CONFIG.RESTITUTION, friction: PHYSICS_CONFIG.FRICTION,
-                                render: { fillStyle: small.color, sprite: small.texture ? { texture: small.texture, xScale: small.scale || 1, yScale: small.scale || 1 } : undefined }
-                            });
-                            const b2 = Matter.Bodies.circle(targetBody.position.x + 20, targetBody.position.y, small.radius, {
-                                label: `symbol_${small.id}`, restitution: PHYSICS_CONFIG.RESTITUTION, friction: PHYSICS_CONFIG.FRICTION,
-                                render: { fillStyle: small.color, sprite: small.texture ? { texture: small.texture, xScale: small.scale || 1, yScale: small.scale || 1 } : undefined }
-                            });
-                            World.add(world, [b1, b2]);
-                            createExplosion(targetBody.position.x, targetBody.position.y, '#A855F7', 0);
-                        }
                         // Joker
                         if (etfId === 104 && targetId < 10) {
                             World.remove(world, [etfBody, targetBody]);
