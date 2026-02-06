@@ -61,10 +61,15 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
         Matter.World.add(engineRef.current.world, body);
         setCanDrop(false);
 
-        // Increment drop counter and trigger event every 10 drops
+        // Increment drop counter and trigger event every 10 drops: 85% price event, 15% ETF selection
         dropCountRef.current++;
         if (dropCountRef.current % 10 === 0) {
-            setTimeout(() => triggerRandomPriceEvent(), 1000); // Delay 1s for visibility
+            const roll = Math.random();
+            if (roll < 0.15) {
+                setTimeout(() => window.dispatchEvent(new CustomEvent('open-etf-selection')), 1000);
+            } else {
+                setTimeout(() => triggerRandomPriceEvent(), 1000);
+            }
         }
 
         // Dispatch drop count update

@@ -20,8 +20,6 @@ interface Particle {
 
 function App() {
   const [seedMoney, setSeedMoney] = useState(0);
-  const [etfCost, setEtfCost] = useState(100);
-  const [etfUseCount, setEtfUseCount] = useState(0);
 
   // Ad Limits
   const [adSwapCount, setAdSwapCount] = useState(0);
@@ -65,39 +63,6 @@ function App() {
       }
       return newScore;
     });
-  };
-
-  const calculateEtfCost = (n: number) => {
-    return Math.floor(100 * Math.pow(1.5, n));
-  };
-
-  const handleEtfLeverPull = () => {
-    if (seedMoney < etfCost) return;
-
-    setSeedMoney(prev => prev - etfCost);
-
-    // Update Cost
-    const nextCount = etfUseCount + 1;
-    setEtfUseCount(nextCount);
-    setEtfCost(calculateEtfCost(nextCount));
-
-    // Pick 3 Random Unique ETFs
-    // ETFS now has ~20 items.
-    // We want weighted rarity? For now, purely random is fun.
-    // Or basic weight: Common(3), Rare(2), Epic(1).
-    // Let's simple random unique for now.
-
-    const pool = [...ETFS];
-    const choices: GameSymbol[] = [];
-    while (choices.length < 3 && pool.length > 0) {
-      const idx = Math.floor(Math.random() * pool.length);
-      const picked = pool[idx];
-      choices.push(picked);
-      pool.splice(idx, 1);
-    }
-
-    setEtfOptions(choices);
-    setShowEtfSelection(true);
   };
 
   const handleEtfSelect = (etf: GameSymbol) => {
@@ -152,8 +117,6 @@ function App() {
   const handleRestart = () => {
     setIsGameOver(false);
     setSeedMoney(0);
-    setEtfUseCount(0);
-    setEtfCost(100);
     setAdSwapCount(0);
     setAdDangerCount(0);
     setDangerLevel(0);
@@ -245,7 +208,23 @@ function App() {
     return () => window.removeEventListener('stock-multiplier-update', handler);
   }, []);
 
-  // ... (existing effects)
+  // 10-drop ETF event: open ETF selection modal with 3 random options (no cost)
+  useEffect(() => {
+    const handler = () => {
+      const pool = [...ETFS];
+      const choices: GameSymbol[] = [];
+      while (choices.length < 3 && pool.length > 0) {
+        const idx = Math.floor(Math.random() * pool.length);
+        const picked = pool[idx];
+        choices.push(picked);
+        pool.splice(idx, 1);
+      }
+      setEtfOptions(choices);
+      setShowEtfSelection(true);
+    };
+    window.addEventListener('open-etf-selection', handler);
+    return () => window.removeEventListener('open-etf-selection', handler);
+  }, []);
 
 
 
@@ -391,26 +370,7 @@ function App() {
             </button>
           </div>
 
-          {/* 2. ETF Lever */}
-          <div className="flex flex-col items-center">
-            <button
-              onClick={handleEtfLeverPull}
-              disabled={seedMoney < etfCost}
-              className={`
-                            relative w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-2 transition-all duration-300
-                            ${seedMoney >= etfCost
-                  ? 'bg-gradient-to-br from-purple-500 to-indigo-600 border-white scale-105 animate-pulse cursor-pointer'
-                  : 'bg-gray-100 border-gray-200 grayscale cursor-not-allowed'}
-                        `}
-            >
-              <div className="text-xl">🎰</div>
-            </button>
-            <div className={`text-[9px] font-bold mt-1 px-2 py-0.5 rounded-full ${seedMoney >= etfCost ? 'bg-black text-white' : 'bg-gray-200 text-gray-400'}`}>
-              ${etfCost.toLocaleString()}
-            </div>
-          </div>
-
-          {/* 3. Drop Counter */}
+          {/* 2. Drop Counter */}
           <div className="glass-panel rounded-xl px-2 py-1 text-center bg-white/60">
             <div className="text-[10px] font-black text-gray-600">
               🎲 {10 - (dropCount % 10)}
