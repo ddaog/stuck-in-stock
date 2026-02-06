@@ -10,6 +10,30 @@ interface GameProps {
     gameState: string;
 }
 
+// Economic news-style headlines (20). Effect applied to random on-screen stock.
+const NEWS_HEADLINES: { text: string; isGood: boolean; color: string }[] = [
+    { text: 'Fed 금리 동결 예상… 성장주 반등', isGood: true, color: '#10B981' },
+    { text: '원유 가격 급등, 에너지·물류주 부담', isGood: false, color: '#EF4444' },
+    { text: '반도체 수요 둔화 우려… 관련주 약세', isGood: false, color: '#EF4444' },
+    { text: '엔저 지속, 수출기업 실적 기대', isGood: true, color: '#10B981' },
+    { text: '중국 경기 부양책 발표… 뉴스에 급등', isGood: true, color: '#10B981' },
+    { text: '미국 인플레이션 둔화… 금리 인하 기대', isGood: true, color: '#10B981' },
+    { text: '배터리 원자재 가격 폭락… 전기차주 타격', isGood: false, color: '#EF4444' },
+    { text: 'AI 서버 수요 폭증… 관련주 급등', isGood: true, color: '#10B981' },
+    { text: '자동차 스트라이크 장기화… 부품주 약세', isGood: false, color: '#EF4444' },
+    { text: '환율 1,400원 돌파… 수출주 호재', isGood: true, color: '#10B981' },
+    { text: '부동산 대출 규제 완화… 금융주 반등', isGood: true, color: '#10B981' },
+    { text: '전기차 보조금 축소… 전기차주 약세', isGood: false, color: '#EF4444' },
+    { text: '반도체 장비 수주 잔대… 장비주 강세', isGood: true, color: '#10B981' },
+    { text: '유가 하락… 항공·물류주 반등', isGood: true, color: '#10B981' },
+    { text: '중국 소비 위축… 럭셔리주 약세', isGood: false, color: '#EF4444' },
+    { text: '반도체 슈퍼사이클 재점화 논의', isGood: true, color: '#10B981' },
+    { text: '금리 인상 가능성… 성장주 일제히 하락', isGood: false, color: '#EF4444' },
+    { text: '원달러 1,300원대 회귀… 수출 기업 호재', isGood: true, color: '#10B981' },
+    { text: '지정학 리스크 확대… 방산·에너지주 급등', isGood: true, color: '#10B981' },
+    { text: 'IT 실적 쇼크… 빅테크 주가 급락', isGood: false, color: '#EF4444' },
+];
+
 const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameState: _setGameState, gameState }) => {
     const sceneRef = useRef<HTMLDivElement>(null);
     const engineRef = useRef<Matter.Engine | null>(null);
@@ -211,7 +235,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                 break;
             }
             case 'RIVAL': {
-                const rivalPairs = [[3, 9], [5, 1]]; // Samsung-Apple, Tesla-Bitcoin
+                const rivalPairs = [[3, 4], [2, 1]]; // Samsong vs SKY Hynix, Never vs Cacao
                 const pair = rivalPairs[Math.floor(Math.random() * rivalPairs.length)];
                 const winner = Math.random() > 0.5 ? pair[0] : pair[1];
                 const loser = winner === pair[0] ? pair[1] : pair[0];
@@ -223,16 +247,10 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                 break;
             }
             case 'NEWS': {
+                const item = NEWS_HEADLINES[Math.floor(Math.random() * NEWS_HEADLINES.length)];
                 const randomId = stockIds[Math.floor(Math.random() * stockIds.length)];
-                const isGood = Math.random() > 0.5;
-                const stock = SYMBOLS.find(s => s.id === randomId);
-                if (isGood) {
-                    adjustPrice(randomId, 0.4, 'news-good');
-                    showEventMessage(`📰 ${stock?.name} 신제품 발표! 주가 급등 🚀`, '#10B981');
-                } else {
-                    adjustPrice(randomId, -0.25, 'news-bad');
-                    showEventMessage(`😱 ${stock?.name} 공급망 이슈 발생!`, '#EF4444');
-                }
+                adjustPrice(randomId, item.isGood ? 0.4 : -0.25, item.isGood ? 'news-good' : 'news-bad');
+                showEventMessage(`📰 ${item.text}`, item.color);
                 break;
             }
             case 'SENTIMENT': {
@@ -246,7 +264,10 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
             case 'SECTOR': {
                 const sectors = [
                     { ids: [3, 4], name: '반도체', emoji: '💾' },
-                    { ids: [9, 5], name: '빅테크', emoji: '📱' },
+                    { ids: [9, 8, 6], name: '빅테크', emoji: '📱' },
+                    { ids: [10, 3, 4], name: 'AI·반도체', emoji: '🤖' },
+                    { ids: [7, 1], name: '이커머스·플랫폼', emoji: '🛒' },
+                    { ids: [5, 2], name: '모빌리티', emoji: '🚗' },
                 ];
                 const sector = sectors[Math.floor(Math.random() * sectors.length)];
                 sector.ids.forEach(id => adjustPrice(id, 0.5, 'sector-boom'));
