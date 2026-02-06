@@ -16,7 +16,7 @@ export default function PriceTicker({ stockMultipliers, event }: PriceTickerProp
         <div className="fixed top-0 left-0 w-full h-10 bg-black/80 backdrop-blur-md z-40 overflow-hidden flex items-center border-b border-white/10 relative">
             {/* Event banner overlay (shown on top of ticker) */}
             {event && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                     <div
                         className="max-w-[92vw] px-4 py-1 rounded-full text-sm font-black shadow-2xl border bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
                         style={{ borderColor: event.color, color: event.color }}
@@ -25,7 +25,7 @@ export default function PriceTicker({ stockMultipliers, event }: PriceTickerProp
                     </div>
                 </div>
             )}
-            <div className="flex animate-marquee whitespace-nowrap">
+            <div className="flex animate-marquee whitespace-nowrap relative z-0">
                 {tickerItems.map((symbol, index) => {
                     const multiplier = stockMultipliers.get(symbol.id) || 1.0;
                     const price = Math.round(symbol.score * multiplier);
