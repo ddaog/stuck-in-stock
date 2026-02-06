@@ -61,6 +61,15 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
         Matter.World.add(engineRef.current.world, body);
         setCanDrop(false);
 
+        // Increment drop counter and trigger event every 10 drops
+        dropCountRef.current++;
+        if (dropCountRef.current % 10 === 0) {
+            setTimeout(() => triggerRandomPriceEvent(), 1000); // Delay 1s for visibility
+        }
+
+        // Dispatch drop count update
+        window.dispatchEvent(new CustomEvent('drop-count', { detail: { count: dropCountRef.current } }));
+
         setTimeout(() => {
             setCurrentSymbol(nextSymbol);
             if (etfQueueRef.current) {
@@ -83,6 +92,10 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
     const scoreMultiplierRef = useRef(1);
     const stockMultipliersRef = useRef<Map<number, number>>(new Map());
 
+    // Drop Counter & Combo
+    const dropCountRef = useRef(0);
+    const comboRef = useRef({ count: 0, lastTime: 0, stockId: -1 });
+
     // Get Dynamic Score (with stock-specific multiplier)
     const getScore = (body: Matter.Body) => {
         const id = parseInt(body.label.split('_')[1]);
@@ -95,6 +108,179 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
         // Global Multiplier (Bull Market)
         const finalScore = points * scoreMultiplierRef.current;
         onScoreUpdate(finalScore);
+    };
+
+    // Price Adjustment Helper
+    const adjustPrice = (id: number, change: number, reason?: string) => {
+        const current = stockMultipliersRef.current.get(id) || 1;
+        const newValue = Math.max(0.3, Math.min(3.0, current + change));
+        stockMultipliersRef.current.set(id, newValue);
+
+        console.log(`[Price] Stock ${id}: ${current.toFixed(2)} -> ${newValue.toFixed(2)} (${reason || 'unknown'})`);
+
+        // Dispatch update
+        window.dispatchEvent(new CustomEvent('stock-multiplier-update', {
+            detail: { id, multiplier: newValue, multipliers: new Map(stockMultipliersRef.current) }
+        }));
+    };
+
+    // Show Event Message
+    const showEventMessage = (text: string, color: string) => {
+        window.dispatchEvent(new CustomEvent('price-event', { detail: { text, color } }));
+    };
+
+    // Random Price Event (every 10 drops)
+    const triggerRandomPriceEvent = () => {
+        if (!engineRef.current) return;
+        const world = engineRef.current.world;
+        const bodies = Matter.Composite.allBodies(world).filter(b => b.label.startsWith('symbol_'));
+
+        if (bodies.length === 0) return;
+
+        // Count stocks by type
+        const counts = new Map<number, number>();
+        bodies.forEach(b => {
+            const id = parseInt(b.label.split('_')[1]);
+            counts.set(id, (counts.get(id) || 0) + 1);
+        });
+
+        const events = [
+            { name: 'SCARCITY', weight: 20 },
+            { name: 'OVERSUPPLY', weight: 20 },
+            { name: 'RIVAL', weight: 15 },
+            { name: 'NEWS', weight: 15 },
+            { name: 'SENTIMENT', weight: 10 },
+            { name: 'SECTOR', weight: 10 },
+            { name: 'BANKRUPTCY', weight: 5 },
+            { name: 'IPO', weight: 5 },
+        ];
+
+        const totalWeight = events.reduce((sum, e) => sum + e.weight, 0);
+        let random = Math.random() * totalWeight;
+        let selected = events[0].name;
+
+        for (const event of events) {
+            random -= event.weight;
+            if (random <= 0) {
+                selected = event.name;
+                break;
+            }
+        }
+
+        executePriceEvent(selected, counts);
+    };
+
+    const executePriceEvent = (eventName: string, counts: Map<number, number>) => {
+        const stockIds = Array.from(counts.keys());
+        if (stockIds.length === 0) return;
+
+        switch (eventName) {
+            case 'SCARCITY': {
+                // Find rarest stock
+                let minCount = Infinity;
+                let rarestId = stockIds[0];
+                counts.forEach((count, id) => {
+                    if (count < minCount) {
+                        minCount = count;
+                        rarestId = id;
+                    }
+                });
+                const stock = SYMBOLS.find(s => s.id === rarestId);
+                adjustPrice(rarestId, 0.5, 'scarcity');
+                showEventMessage(`💎 ${stock?.name || 'Stock'}이 희소가치를 인정받았습니다!`, '#10B981');
+                break;
+            }
+            case 'OVERSUPPLY': {
+                // Find most common stock
+                let maxCount = 0;
+                let commonId = stockIds[0];
+                counts.forEach((count, id) => {
+                    if (count > maxCount) {
+                        maxCount = count;
+                        commonId = id;
+                    }
+                });
+                const stock = SYMBOLS.find(s => s.id === commonId);
+                adjustPrice(commonId, -0.3, 'oversupply');
+                showEventMessage(`📦 ${stock?.name || 'Stock'} 공급 과잉! 가격 급락`, '#EF4444');
+                break;
+            }
+            case 'RIVAL': {
+                const rivalPairs = [[3, 9], [5, 1]]; // Samsung-Apple, Tesla-Bitcoin
+                const pair = rivalPairs[Math.floor(Math.random() * rivalPairs.length)];
+                const winner = Math.random() > 0.5 ? pair[0] : pair[1];
+                const loser = winner === pair[0] ? pair[1] : pair[0];
+                adjustPrice(winner, 0.3, 'rival-win');
+                adjustPrice(loser, -0.2, 'rival-lose');
+                const winStock = SYMBOLS.find(s => s.id === winner);
+                const loseStock = SYMBOLS.find(s => s.id === loser);
+                showEventMessage(`⚔️ ${winStock?.name} vs ${loseStock?.name}! ${winStock?.name} 승리!`, '#F59E0B');
+                break;
+            }
+            case 'NEWS': {
+                const randomId = stockIds[Math.floor(Math.random() * stockIds.length)];
+                const isGood = Math.random() > 0.5;
+                const stock = SYMBOLS.find(s => s.id === randomId);
+                if (isGood) {
+                    adjustPrice(randomId, 0.4, 'news-good');
+                    showEventMessage(`📰 ${stock?.name} 신제품 발표! 주가 급등 🚀`, '#10B981');
+                } else {
+                    adjustPrice(randomId, -0.25, 'news-bad');
+                    showEventMessage(`😱 ${stock?.name} 공급망 이슈 발생!`, '#EF4444');
+                }
+                break;
+            }
+            case 'SENTIMENT': {
+                const isBull = Math.random() > 0.5;
+                stockIds.forEach(id => {
+                    adjustPrice(id, isBull ? 0.15 : -0.15, 'sentiment');
+                });
+                showEventMessage(isBull ? '🔥 시장 전체 강세! Bull Run!' : '❄️ 시장 전체 약세... Bear Market', isBull ? '#EF4444' : '#3B82F6');
+                break;
+            }
+            case 'SECTOR': {
+                const sectors = [
+                    { ids: [3, 4], name: '반도체', emoji: '💾' },
+                    { ids: [9, 5], name: '빅테크', emoji: '📱' },
+                ];
+                const sector = sectors[Math.floor(Math.random() * sectors.length)];
+                sector.ids.forEach(id => adjustPrice(id, 0.5, 'sector-boom'));
+                showEventMessage(`${sector.emoji} ${sector.name} 섹터 호황!`, '#8B5CF6');
+                break;
+            }
+            case 'BANKRUPTCY': {
+                // Find stock with lowest multiplier
+                let minMult = Infinity;
+                let targetId = stockIds[0];
+                stockIds.forEach(id => {
+                    const mult = stockMultipliersRef.current.get(id) || 1;
+                    if (mult < minMult) {
+                        minMult = mult;
+                        targetId = id;
+                    }
+                });
+                const stock = SYMBOLS.find(s => s.id === targetId);
+                adjustPrice(targetId, -0.4, 'bankruptcy');
+                showEventMessage(`⚠️ ${stock?.name} 상장폐지 위험!`, '#DC2626');
+                break;
+            }
+            case 'IPO': {
+                // Find stock with lowest multiplier and reset
+                let minMult = Infinity;
+                let targetId = stockIds[0];
+                stockIds.forEach(id => {
+                    const mult = stockMultipliersRef.current.get(id) || 1;
+                    if (mult < minMult) {
+                        minMult = mult;
+                        targetId = id;
+                    }
+                });
+                const stock = SYMBOLS.find(s => s.id === targetId);
+                stockMultipliersRef.current.set(targetId, 1.0);
+                showEventMessage(`🎉 ${stock?.name} 재상장! 가격 정상화`, '#10B981');
+                break;
+            }
+        }
     };
 
     // --- ETF / Event Handlers ---
@@ -153,8 +339,8 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                 Matter.World.remove(world, bottomOnes);
                 break;
             case 'BUBBLE':
-                // Doge (0) Price Bubble x10
-                stockMultipliersRef.current.set(0, 10);
+                // Doge (0) Price Bubble x5 (8s)
+                stockMultipliersRef.current.set(0, 5);
                 window.dispatchEvent(new CustomEvent('global-effect-active', { detail: { type: 'BUBBLE' } }));
 
                 // Visual POP for existing Doges
@@ -168,7 +354,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                 setTimeout(() => {
                     stockMultipliersRef.current.set(0, 1);
                     window.dispatchEvent(new CustomEvent('global-effect-active', { detail: { type: 'NONE' } }));
-                }, 15000);
+                }, 8000);
                 break;
 
             case 'PANIC_SELL': // Bear Market
@@ -198,8 +384,8 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                 break;
 
             case 'SUPER_CYCLE':
-                // Semi Supercycle: Samsung(3), Hynix(4), Tesla(5) x3
-                [3, 4, 5].forEach(id => stockMultipliersRef.current.set(id, 3));
+                // Semi Supercycle: Samsung(3), Hynix(4), Tesla(5) x2 (10s)
+                [3, 4, 5].forEach(id => stockMultipliersRef.current.set(id, 2));
                 window.dispatchEvent(new CustomEvent('global-effect-active', { detail: { type: 'SUPER_CYCLE' } }));
 
                 // Visual cue
@@ -213,7 +399,7 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                 setTimeout(() => {
                     [3, 4, 5].forEach(id => stockMultipliersRef.current.set(id, 1));
                     window.dispatchEvent(new CustomEvent('global-effect-active', { detail: { type: 'NONE' } }));
-                }, 20000); // 20s
+                }, 10000); // 10s
                 break;
 
             case 'BLACKHOLE':
@@ -355,6 +541,25 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                         World.add(world, newB);
                         applyScore(newSym.score);
                         createExplosion(midX, midY, newSym.color, newSym.score);
+
+                        // Combo System
+                        const now = Date.now();
+                        if (now - comboRef.current.lastTime < 5000 && comboRef.current.stockId === idA) {
+                            comboRef.current.count++;
+                        } else {
+                            comboRef.current.count = 1;
+                            comboRef.current.stockId = idA;
+                        }
+                        comboRef.current.lastTime = now;
+
+                        const bonus = comboRef.current.count >= 4 ? 0.4 :
+                            comboRef.current.count === 3 ? 0.25 :
+                                comboRef.current.count === 2 ? 0.15 : 0.1;
+                        adjustPrice(idA, bonus, `merge-combo-${comboRef.current.count}`);
+
+                        if (comboRef.current.count >= 3) {
+                            showEventMessage(`🔥 COMBO x${comboRef.current.count}!`, '#F59E0B');
+                        }
                     }
                 }
             }
@@ -439,12 +644,17 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
 
             if (target) {
                 if (interactionMode.effectId === 'REMOVE_SINGLE') {
+                    const targetId = parseInt(target.label.split('_')[1]);
                     Matter.World.remove(engineRef.current.world, target);
                     const s = getScore(target);
                     applyScore(s);
                     createExplosion(target.position.x, target.position.y, '#f00', s);
+
+                    // Price decrease on removal
+                    adjustPrice(targetId, -0.08, 'removal');
                 } else if (interactionMode.effectId === 'REMOVE_TYPE') {
                     const label = target.label;
+                    const targetId = parseInt(label.split('_')[1]);
                     const targets = bodies.filter(b => b.label === label);
                     let removeScore = 0;
                     targets.forEach(b => {
@@ -454,6 +664,9 @@ const Game: React.FC<GameProps> = ({ onScoreUpdate, onNextItemUpdate, setGameSta
                     });
                     applyScore(removeScore);
                     Matter.World.remove(engineRef.current.world, targets);
+
+                    // Price decrease (mass removal)
+                    adjustPrice(targetId, targets.length >= 5 ? -0.15 : -0.08, 'mass-removal');
                 }
                 setInteractionMode(null);
             }

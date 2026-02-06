@@ -185,6 +185,12 @@ function App() {
   // Global Effect Overlay State
   const [globalEffect, setGlobalEffect] = useState<'NONE' | 'BULL' | 'BEAR' | 'SUPER_CYCLE' | 'BUBBLE'>('NONE');
 
+  // Price Event Message
+  const [priceEvent, setPriceEvent] = useState<{ text: string, color: string } | null>(null);
+
+  // Drop Counter
+  const [dropCount, setDropCount] = useState(0);
+
   // Danger Level Listener
   useEffect(() => {
     const handler = (e: Event) => {
@@ -204,6 +210,38 @@ function App() {
     };
     window.addEventListener('global-effect-active', handler);
     return () => window.removeEventListener('global-effect-active', handler);
+  }, []);
+
+  // Price Event Listener
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setPriceEvent({ text: detail.text, color: detail.color });
+      setTimeout(() => setPriceEvent(null), 3000); // Clear after 3s
+    };
+    window.addEventListener('price-event', handler);
+    return () => window.removeEventListener('price-event', handler);
+  }, []);
+
+  // Drop Count Listener
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setDropCount(detail.count);
+    };
+    window.addEventListener('drop-count', handler);
+    return () => window.removeEventListener('drop-count', handler);
+  }, []);
+
+  // Stock Multipliers Listener
+  const [stockMultipliers, setStockMultipliers] = useState<Map<number, number>>(new Map());
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setStockMultipliers(detail.multipliers);
+    };
+    window.addEventListener('stock-multiplier-update', handler);
+    return () => window.removeEventListener('stock-multiplier-update', handler);
   }, []);
 
   // ... (existing effects)
@@ -367,6 +405,16 @@ function App() {
                 ${etfCost.toLocaleString()}
               </div>
             </div>
+
+            {/* Drop Counter */}
+            <div className="mt-2 text-center pointer-events-none">
+              <div className="glass-panel rounded-xl px-3 py-1.5 inline-block">
+                <div className="text-[10px] text-gray-500 font-bold mb-0.5">NEXT EVENT</div>
+                <div className="text-sm font-black text-gray-800">
+                  🎲 {10 - (dropCount % 10)} drops
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -417,6 +465,18 @@ function App() {
               </div>
             )}
           </div>
+
+          {/* Price Event Message */}
+          {priceEvent && (
+            <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                            bg-black/90 text-white px-6 py-3 rounded-2xl text-lg font-bold 
+                            animate-bounce z-50 shadow-2xl border-2"
+              style={{ borderColor: priceEvent.color }}>
+              <div className="text-center" style={{ color: priceEvent.color }}>
+                {priceEvent.text}
+              </div>
+            </div>
+          )}
 
           {/* Danger Line (Static Visual) */}
           <div className="absolute top-[150px] left-0 w-full z-0 border-b-2 border-red-500/30 border-dashed pointer-events-none flex justify-end px-2">
@@ -505,14 +565,16 @@ function App() {
           />
         )}
 
-        {/* Evolution Modal */}
         {showEvolutionModal && (
-          <EvolutionModal onClose={() => setShowEvolutionModal(false)} />
+          <EvolutionModal
+            onClose={() => setShowEvolutionModal(false)}
+            stockMultipliers={stockMultipliers}
+          />
         )}
 
         {/* Version Indicator */}
         <div className="absolute bottom-1 left-2 text-[10px] text-gray-400 font-mono opacity-50 pointer-events-none z-50">
-          v1.2.7 ({new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})
+          v1.2.8 ({new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})
         </div>
 
         {/* Game Over Modal */}
