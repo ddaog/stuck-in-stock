@@ -312,7 +312,19 @@ function App() {
     <div className="relative w-full h-full bg-[#FAFAFA] overflow-hidden select-none">
 
       {/* Price Ticker Bar (Top Fixed) */}
-      <PriceTicker stockMultipliers={stockMultipliers} event={priceEvent} />
+      <PriceTicker stockMultipliers={stockMultipliers} />
+
+      {/* Event/ETF notification (bottom) */}
+      {priceEvent && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+          <div
+            className="max-w-[92vw] px-5 py-2 rounded-full text-sm font-black shadow-2xl border-2 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+            style={{ borderColor: priceEvent.color, color: priceEvent.color }}
+          >
+            {priceEvent.text}
+          </div>
+        </div>
+      )}
 
       {/* UI Layer */}
       <div className="absolute inset-0 z-30 pointer-events-none mt-10"> {/* Add margin-top for ticker */}
