@@ -146,10 +146,7 @@ function App() {
 
   const [dangerTimer, setDangerTimer] = useState(0);
 
-  // Global Effect Overlay State
-  const [globalEffect, setGlobalEffect] = useState<'NONE' | 'BULL' | 'BEAR' | 'SUPER_CYCLE' | 'BUBBLE'>('NONE');
-
-  // Price Event Message
+  // Price Event Message (also used for ETF effect notices in ticker)
   const [priceEvent, setPriceEvent] = useState<{ text: string, color: string } | null>(null);
 
   // Drop Counter
@@ -166,11 +163,23 @@ function App() {
     return () => window.removeEventListener('danger-level', handler);
   }, []);
 
-  // Global Effect Listener
+  // Global Effect → show in ticker only (no full-screen overlay)
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      setGlobalEffect(detail.type);
+      const type = detail.type;
+      if (type === 'NONE') return;
+      const messages: Record<string, { text: string; color: string }> = {
+        BULL: { text: '🚀 불장 · SCORE x2', color: '#EF4444' },
+        BEAR: { text: '📉 물장 · PANIC SELL', color: '#3B82F6' },
+        SUPER_CYCLE: { text: '💾 반도체 슈퍼사이클', color: '#10B981' },
+        BUBBLE: { text: '🫧 테마주 열풍', color: '#EC4899' },
+      };
+      const msg = messages[type];
+      if (msg) {
+        setPriceEvent(msg);
+        setTimeout(() => setPriceEvent(null), 3000);
+      }
     };
     window.addEventListener('global-effect-active', handler);
     return () => window.removeEventListener('global-effect-active', handler);
@@ -392,40 +401,6 @@ function App() {
             <div className="text-center animate-pulse">
               <div className="text-white font-black text-4xl drop-shadow-md">{Math.ceil(dangerTimer)}</div>
               <div className="text-white text-xs font-bold uppercase tracking-widest mt-1">Danger</div>
-            </div>
-          )}
-        </div>
-
-        {/* GLOBAL EFFECT OVERLAY (Bull/Bear/Super/Bubble) */}
-        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-500 z-10 font-sans
-              ${globalEffect === 'BULL' ? 'bg-red-500/10' :
-            globalEffect === 'BEAR' ? 'bg-blue-500/10' :
-              globalEffect === 'SUPER_CYCLE' ? 'bg-green-500/10' :
-                globalEffect === 'BUBBLE' ? 'bg-pink-500/10' :
-                  'opacity-0'}
-          `}>
-          {globalEffect === 'BULL' && (
-            <div className="absolute top-1/4 w-full text-center animate-bounce font-sans">
-              <span className="text-4xl filter drop-shadow-lg">🚀 불장 🚀</span>
-              <div className="text-red-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">SCORE x2</div>
-            </div>
-          )}
-          {globalEffect === 'BEAR' && (
-            <div className="absolute top-1/4 w-full text-center animate-pulse font-sans">
-              <span className="text-4xl filter drop-shadow-lg">📉 물장 📉</span>
-              <div className="text-blue-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">PANIC SELL</div>
-            </div>
-          )}
-          {globalEffect === 'SUPER_CYCLE' && (
-            <div className="absolute top-1/4 w-full text-center animate-bounce font-sans">
-              <span className="text-4xl filter drop-shadow-lg">💾 반도체 슈퍼사이클 💾</span>
-              <div className="text-green-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">반도체 주가 폭등 (x3)</div>
-            </div>
-          )}
-          {globalEffect === 'BUBBLE' && (
-            <div className="absolute top-1/4 w-full text-center animate-pulse font-sans">
-              <span className="text-4xl filter drop-shadow-lg">🫧 테마주 열풍 (Bubble) 🫧</span>
-              <div className="text-pink-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">도지코인 떡상 (x10)</div>
             </div>
           )}
         </div>
