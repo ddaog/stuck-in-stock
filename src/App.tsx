@@ -397,7 +397,7 @@ function App() {
         </div>
 
         {/* GLOBAL EFFECT OVERLAY (Bull/Bear/Super/Bubble) */}
-        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-500 z-10 
+        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-500 z-10 font-sans
               ${globalEffect === 'BULL' ? 'bg-red-500/10' :
             globalEffect === 'BEAR' ? 'bg-blue-500/10' :
               globalEffect === 'SUPER_CYCLE' ? 'bg-green-500/10' :
@@ -405,25 +405,25 @@ function App() {
                   'opacity-0'}
           `}>
           {globalEffect === 'BULL' && (
-            <div className="absolute top-1/4 w-full text-center animate-bounce">
-              <span className="text-4xl filter drop-shadow-lg">🚀 불장 (BULL MARKET) 🚀</span>
+            <div className="absolute top-1/4 w-full text-center animate-bounce font-sans">
+              <span className="text-4xl filter drop-shadow-lg">🚀 불장 🚀</span>
               <div className="text-red-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">SCORE x2</div>
             </div>
           )}
           {globalEffect === 'BEAR' && (
-            <div className="absolute top-1/4 w-full text-center animate-pulse">
-              <span className="text-4xl filter drop-shadow-lg">📉 물장 (BEAR MARKET) 📉</span>
+            <div className="absolute top-1/4 w-full text-center animate-pulse font-sans">
+              <span className="text-4xl filter drop-shadow-lg">📉 물장 📉</span>
               <div className="text-blue-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">PANIC SELL</div>
             </div>
           )}
           {globalEffect === 'SUPER_CYCLE' && (
-            <div className="absolute top-1/4 w-full text-center animate-bounce">
+            <div className="absolute top-1/4 w-full text-center animate-bounce font-sans">
               <span className="text-4xl filter drop-shadow-lg">💾 반도체 슈퍼사이클 💾</span>
               <div className="text-green-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">반도체 주가 폭등 (x3)</div>
             </div>
           )}
           {globalEffect === 'BUBBLE' && (
-            <div className="absolute top-1/4 w-full text-center animate-pulse">
+            <div className="absolute top-1/4 w-full text-center animate-pulse font-sans">
               <span className="text-4xl filter drop-shadow-lg">🫧 테마주 열풍 (Bubble) 🫧</span>
               <div className="text-pink-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">도지코인 떡상 (x10)</div>
             </div>
