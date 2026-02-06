@@ -2,10 +2,11 @@ import { useRef, useState, useEffect } from 'react';
 import Game from './game/Game';
 import { GAME_STATES, SYMBOLS, ETFS } from './constants/gameData';
 import type { GameSymbol } from './constants/gameData';
-import { X, Info, Tv, History } from 'lucide-react';
+import { X, Tv, History } from 'lucide-react';
 import EvolutionModal from './components/EvolutionModal';
 import AdModal from './components/AdModal';
 import EtfSelectionModal from './components/EtfSelectionModal';
+import PriceTicker from './components/PriceTicker';
 
 interface Particle {
   id: number;
@@ -320,299 +321,301 @@ function App() {
   }, []);
 
   return (
-    <div className="relative w-full h-full bg-slate-900 overflow-hidden flex items-center justify-center">
-      <div className="relative w-full h-full max-w-[480px] bg-[#F2F4F6] shadow-2xl overflow-hidden font-sans">
+    <div className="relative w-full h-full bg-[#FAFAFA] overflow-hidden select-none">
 
+      {/* Price Ticker Bar (Top Fixed) */}
+      <PriceTicker stockMultipliers={stockMultipliers} />
 
-        <div className="h-[44px] w-full" /> {/* Status Bar Area */}
+      {/* UI Layer */}
+      <div className="absolute inset-0 z-30 pointer-events-none mt-10"> {/* Add margin-top for ticker */}
 
-        {/* Header */}
-        <div className="absolute top-[50px] left-0 w-full px-4 flex justify-between items-start z-10 pointer-events-none">
-
-          {/* Seed Money */}
-          <div className="glass-panel px-5 py-3 rounded-2xl flex flex-col items-start min-w-[100px]">
-            <div className="text-[10px] text-[#8B95A1] font-bold tracking-wider mb-1">SEED MONEY</div>
-            <div className="text-3xl font-extrabold tracking-tight text-[#191F28] flex items-center gap-1">
-              <span className="text-green-600">$</span>{seedMoney.toLocaleString()}
+        {/* Top Left: Seed Money & Best Score */}
+        <div className="absolute top-4 left-4 pointer-events-auto transition-transform hover:scale-105 active:scale-95">
+          <div className="glass-panel rounded-[24px] p-5 pr-8 shadow-sm bg-white/60 backdrop-blur-md border border-white/50">
+            <h1 className="text-[10px] font-bold text-gray-400 tracking-widest mb-1 uppercase">Seed Money</h1>
+            <div className={`text-4xl font-black tracking-tight flex items-baseline gap-1
+                ${seedMoney < 0 ? 'text-red-500' : 'text-[#191F28]'}
+            `}>
+              <span className="text-2xl opacity-60">$</span>
+              {seedMoney.toLocaleString()}
             </div>
-            <div className="text-xs text-[#8B95A1] font-medium mt-1">BEST ${bestScore.toLocaleString()}</div>
-          </div>
-
-          {/* Right Controls */}
-          <div className="flex flex-col items-end gap-2 pointer-events-auto">
-            <button
-              onClick={() => setShowEvolutionModal(true)}
-              className="p-3 glass-panel rounded-full active:scale-95 transition-transform text-[#4E5968] mb-2"
-            >
-              <Info size={20} strokeWidth={2.5} />
-            </button>
-
-            <button
-              onClick={() => setShowExitModal(true)}
-              className="p-3 glass-panel rounded-full active:scale-95 transition-transform text-[#4E5968]"
-            >
-              <X size={20} strokeWidth={2.5} />
-            </button>
-
-            {/* Next Preview & Ad Swap */}
-            <div className="flex flex-col items-end gap-1">
-              {/* Ad Swap Button */}
-              <button
-                onClick={handleAdSwapTrigger}
-                className={`bg-black/5 hover:bg-black/10 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 text-[#4E5968] active:scale-95 transition-all
-                        ${adSwapCount >= MAX_SWAP_ADS ? 'opacity-50 grayscale' : ''}
-                    `}
-              >
-                <Tv size={12} strokeWidth={2.5} />
-                <span>Change ({MAX_SWAP_ADS - adSwapCount})</span>
-              </button>
-
-              {/* Next Box */}
-              <div
-                className="glass-panel rounded-2xl p-2 flex flex-col items-center w-[64px]">
-                <span className="text-[10px] text-[#8B95A1] font-bold mb-1 tracking-wider">NEXT</span>
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-lg overflow-hidden shadow-inner bg-white/50"
-                  style={{ backgroundColor: nextSymbol.texture ? 'transparent' : nextSymbol.color }}
-                >
-                  {nextSymbol.texture ? (
-                    <img src={nextSymbol.texture} alt={nextSymbol.name} className="w-full h-full object-contain drop-shadow-sm" />
-                  ) : (
-                    nextSymbol.label
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* ETF Lever */}
-            <div className="mt-2 text-center pointer-events-auto flex flex-col items-center">
-              <button
-                onClick={handleEtfLeverPull}
-                disabled={seedMoney < etfCost}
-                className={`
-                        relative w-16 h-16 rounded-full flex items-center justify-center shadow-xl border-4 transition-all duration-300
-                        ${seedMoney >= etfCost
-                    ? 'bg-gradient-to-br from-purple-500 to-indigo-600 border-white scale-110 animate-pulse cursor-pointer'
-                    : 'bg-gray-200 border-gray-300 grayscale cursor-not-allowed'}
-                    `}
-              >
-                <div className="text-2xl">🎰</div>
-                {seedMoney >= etfCost && (
-                  <div className="absolute -bottom-2 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold animate-bounce z-10 w-auto whitespace-nowrap">PULL!</div>
-                )}
-              </button>
-              <div className={`text-[10px] font-bold mt-1 px-2 py-0.5 rounded-full ${seedMoney >= etfCost ? 'bg-black text-white' : 'bg-gray-200 text-gray-400'}`}>
-                ${etfCost.toLocaleString()}
-              </div>
-            </div>
-
-            {/* Drop Counter */}
-            <div className="mt-2 text-center pointer-events-none">
-              <div className="glass-panel rounded-xl px-3 py-1.5 inline-block">
-                <div className="text-[10px] text-gray-500 font-bold mb-0.5">NEXT EVENT</div>
-                <div className="text-sm font-black text-gray-800">
-                  🎲 {10 - (dropCount % 10)} drops
-                </div>
-              </div>
+            <div className="text-[10px] font-medium text-gray-400 mt-1">
+              BEST ${bestScore.toLocaleString()}
             </div>
           </div>
         </div>
 
-        {/* Main Game */}
-        <div className="absolute inset-0 z-0 pt-[100px] pb-[40px]">
-          {/* DANGER OVERLAY & TIMER */}
-          <div className={`absolute top-0 left-0 w-full h-[200px] bg-gradient-to-b from-red-600/40 to-transparent pointer-events-none transition-opacity duration-300 z-20 flex justify-center pt-8
-                      ${dangerLevel > 0 ? 'opacity-100' : 'opacity-0'}
-                   `}>
-            {dangerTimer > 0 && (
-              <div className="text-center animate-pulse">
-                <div className="text-white font-black text-4xl drop-shadow-md">{Math.ceil(dangerTimer)}</div>
-                <div className="text-white text-xs font-bold uppercase tracking-widest mt-1">Danger</div>
-              </div>
-            )}
-          </div>
-
-          {/* GLOBAL EFFECT OVERLAY (Bull/Bear/Super/Bubble) */}
-          <div className={`absolute inset-0 pointer-events-none transition-opacity duration-500 z-10 
-              ${globalEffect === 'BULL' ? 'bg-red-500/10' :
-              globalEffect === 'BEAR' ? 'bg-blue-500/10' :
-                globalEffect === 'SUPER_CYCLE' ? 'bg-green-500/10' :
-                  globalEffect === 'BUBBLE' ? 'bg-pink-500/10' :
-                    'opacity-0'}
-          `}>
-            {globalEffect === 'BULL' && (
-              <div className="absolute top-1/4 w-full text-center animate-bounce">
-                <span className="text-4xl filter drop-shadow-lg">🚀 불장 (BULL MARKET) 🚀</span>
-                <div className="text-red-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">SCORE x2</div>
-              </div>
-            )}
-            {globalEffect === 'BEAR' && (
-              <div className="absolute top-1/4 w-full text-center animate-pulse">
-                <span className="text-4xl filter drop-shadow-lg">📉 물장 (BEAR MARKET) 📉</span>
-                <div className="text-blue-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">PANIC SELL</div>
-              </div>
-            )}
-            {globalEffect === 'SUPER_CYCLE' && (
-              <div className="absolute top-1/4 w-full text-center animate-bounce">
-                <span className="text-4xl filter drop-shadow-lg">💾 반도체 슈퍼사이클 💾</span>
-                <div className="text-green-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">반도체 주가 폭등 (x3)</div>
-              </div>
-            )}
-            {globalEffect === 'BUBBLE' && (
-              <div className="absolute top-1/4 w-full text-center animate-pulse">
-                <span className="text-4xl filter drop-shadow-lg">🫧 테마주 열풍 (Bubble) 🫧</span>
-                <div className="text-pink-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">도지코인 떡상 (x10)</div>
-              </div>
-            )}
-          </div>
-
-          {/* Price Event Message */}
-          {priceEvent && (
-            <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
-                            bg-black/90 text-white px-6 py-3 rounded-2xl text-lg font-bold 
-                            animate-bounce z-50 shadow-2xl border-2"
-              style={{ borderColor: priceEvent.color }}>
-              <div className="text-center" style={{ color: priceEvent.color }}>
-                {priceEvent.text}
-              </div>
-            </div>
-          )}
-
-          {/* Danger Line (Static Visual) */}
-          <div className="absolute top-[150px] left-0 w-full z-0 border-b-2 border-red-500/30 border-dashed pointer-events-none flex justify-end px-2">
-            <span className={`text-[10px] font-bold tracking-widest uppercase mt-[-16px] transition-colors duration-300
-                    ${dangerLevel > 0 ? 'text-red-500' : 'text-red-500/50'}
-                `}>Danger Zone</span>
-          </div>
-
-          <Game
-            onScoreUpdate={handleScoreUpdate}
-            onNextItemUpdate={handleNextItemUpdate}
-            setGameState={setGameState}
-            gameState={gameState}
-          />
-        </div>
-
-        {/* Particles */}
-        {particles.map(p => (
-          <div
-            key={p.id}
-            className="absolute rounded-full pointer-events-none z-20"
-            style={{
-              left: p.x,
-              top: p.y, // Removed +100 offset
-              width: 'auto', // Auto width for text
-              height: 30,
-              opacity: p.life,
-              transform: `scale(${1 + (1 - p.life)})`, // Grow slightly as it fades
-              color: p.symbol.startsWith('+') ? '#10B981' : p.color, // Force Green for score
-              textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-              fontWeight: 900,
-              fill: 'currentColor',
-              fontSize: p.symbol.startsWith('+') ? '24px' : '20px', // Larger for score
-              fontFamily: 'monospace',
-              whiteSpace: 'nowrap',
-              pointerEvents: 'none',
-              zIndex: 50,
-            }}
+        {/* Top Right: Buttons (Reset, Evolution) */}
+        <div className="absolute top-4 right-4 flex gap-2 pointer-events-auto">
+          <button
+            onClick={() => setShowEvolutionModal(true)}
+            className="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-gray-400 hover:text-gray-900 active:scale-90 transition-all shadow-sm bg-white/60"
           >
-            {p.symbol}
-          </div>
-        ))}
-
-        {/* Exit Modal */}
-        {showExitModal && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white w-full max-w-xs rounded-2xl p-6 shadow-xl flex flex-col gap-4 text-center anim-pop">
-              <h3 className="text-lg font-bold">Nirvana Game을<br />종료할까요?</h3>
-              <div className="flex gap-3 mt-2">
-                <button
-                  onClick={() => setShowExitModal(false)}
-                  className="flex-1 py-3 bg-gray-100 rounded-xl font-medium active:bg-gray-200 transition-colors"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handleExit}
-                  className="flex-1 py-3 bg-blue-500 text-white rounded-xl font-medium active:bg-blue-600 transition-colors"
-                >
-                  종료하기
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Ad Modal */}
-        {showAdModal && (
-          <AdModal
-            onConfirm={handleConfirmAd}
-            onCancel={() => {
-              setShowAdModal(false);
-              // If denied danger help, die
-              if (adModalType === 'DANGER') setIsGameOver(true);
-            }}
-            type={adModalType}
-          />
-        )}
-
-        {/* ETF Selection Modal */}
-        {showEtfSelection && (
-          <EtfSelectionModal
-            options={etfOptions}
-            onSelect={handleEtfSelect}
-            onClose={() => setShowEtfSelection(false)}
-          />
-        )}
-
-        {showEvolutionModal && (
-          <EvolutionModal
-            onClose={() => setShowEvolutionModal(false)}
-            stockMultipliers={stockMultipliers}
-          />
-        )}
-
-        {/* Version Indicator */}
-        <div className="absolute bottom-1 left-2 text-[10px] text-gray-400 font-mono opacity-50 pointer-events-none z-50">
-          v1.2.8 ({new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})
+            <div className="text-xl">🏆</div>
+          </button>
+          <button
+            onClick={() => setShowExitModal(true)}
+            className="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-gray-400 hover:text-red-500 active:scale-90 transition-all shadow-sm bg-white/60"
+          >
+            <X size={20} strokeWidth={2.5} />
+          </button>
         </div>
 
-        {/* Game Over Modal */}
-        {isGameOver && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-500">
-            <div className="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 to-orange-500" />
-              <div className="text-6xl mb-4">💀</div>
-              <h2 className="text-3xl font-black text-gray-900 mb-2">GAME OVER</h2>
-              <p className="text-gray-500 mb-6">시장이 마감되었습니다.</p>
+        {/* Right Side Control Panel (Compact Group) */}
+        <div className="absolute right-4 top-1/3 transform -translate-y-1/2 flex flex-col gap-4 pointer-events-auto">
 
-              <div className="bg-gray-100 rounded-2xl p-4 mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-500 font-bold">최종 자산 (Seed Money)</span>
-                  <span className="text-2xl font-black text-gray-800">${seedMoney.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">Historical High</span>
-                  <span className="text-sm font-bold text-blue-600">${bestScore.toLocaleString()}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-center gap-2 mb-4 text-gray-400 text-xs">
-                <History size={12} />
-                <span>Rescue Used: {adDangerCount}/{MAX_DANGER_ADS}</span>
-              </div>
-
-              <button
-                onClick={handleRestart}
-                className="w-full py-4 bg-black text-white rounded-2xl font-bold text-lg active:scale-95 transition-transform shadow-lg hover:shadow-xl"
+          {/* 1. Next Item & Change */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="glass-panel rounded-2xl p-2 flex flex-col items-center w-[64px] bg-white/60 backdrop-blur-md shadow-sm">
+              <span className="text-[9px] text-gray-400 font-bold mb-1 tracking-wider uppercase">Next</span>
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center text-lg overflow-hidden shadow-inner bg-white/50"
+                style={{ backgroundColor: nextSymbol.texture ? 'transparent' : nextSymbol.color }}
               >
-                시장 재진입 (Restart)
-              </button>
+                {nextSymbol.texture ? (
+                  <img src={nextSymbol.texture} alt={nextSymbol.name} className="w-full h-full object-contain drop-shadow-sm" />
+                ) : (
+                  nextSymbol.label
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={handleAdSwapTrigger}
+              className={`bg-white/80 hover:bg-white text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1 text-gray-500 shadow-sm border border-gray-100 active:scale-95 transition-all
+                            ${adSwapCount >= MAX_SWAP_ADS ? 'opacity-50 grayscale' : ''}
+                        `}
+            >
+              <Tv size={10} strokeWidth={2.5} />
+              <span>Change</span>
+            </button>
+          </div>
+
+          {/* 2. ETF Lever */}
+          <div className="flex flex-col items-center">
+            <button
+              onClick={handleEtfLeverPull}
+              disabled={seedMoney < etfCost}
+              className={`
+                            relative w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-2 transition-all duration-300
+                            ${seedMoney >= etfCost
+                  ? 'bg-gradient-to-br from-purple-500 to-indigo-600 border-white scale-105 animate-pulse cursor-pointer'
+                  : 'bg-gray-100 border-gray-200 grayscale cursor-not-allowed'}
+                        `}
+            >
+              <div className="text-xl">🎰</div>
+            </button>
+            <div className={`text-[9px] font-bold mt-1 px-2 py-0.5 rounded-full ${seedMoney >= etfCost ? 'bg-black text-white' : 'bg-gray-200 text-gray-400'}`}>
+              ${etfCost.toLocaleString()}
             </div>
           </div>
-        )}
+
+          {/* 3. Drop Counter */}
+          <div className="glass-panel rounded-xl px-2 py-1 text-center bg-white/60">
+            <div className="text-[10px] font-black text-gray-600">
+              🎲 {10 - (dropCount % 10)}
+            </div>
+          </div>
+
+        </div>
 
       </div>
+
+      {/* Main Game */}
+      <div className="absolute inset-0 z-0 pt-[60px] pb-[40px]"> {/* Adjusted pt for Ticker */}
+
+        {/* DANGER OVERLAY & TIMER */}
+        <div className={`absolute top-0 left-0 w-full h-[200px] bg-gradient-to-b from-red-600/40 to-transparent pointer-events-none transition-opacity duration-300 z-20 flex justify-center pt-8
+                      ${dangerLevel > 0 ? 'opacity-100' : 'opacity-0'}
+                   `}>
+          {dangerTimer > 0 && (
+            <div className="text-center animate-pulse">
+              <div className="text-white font-black text-4xl drop-shadow-md">{Math.ceil(dangerTimer)}</div>
+              <div className="text-white text-xs font-bold uppercase tracking-widest mt-1">Danger</div>
+            </div>
+          )}
+        </div>
+
+        {/* GLOBAL EFFECT OVERLAY (Bull/Bear/Super/Bubble) */}
+        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-500 z-10 
+              ${globalEffect === 'BULL' ? 'bg-red-500/10' :
+            globalEffect === 'BEAR' ? 'bg-blue-500/10' :
+              globalEffect === 'SUPER_CYCLE' ? 'bg-green-500/10' :
+                globalEffect === 'BUBBLE' ? 'bg-pink-500/10' :
+                  'opacity-0'}
+          `}>
+          {globalEffect === 'BULL' && (
+            <div className="absolute top-1/4 w-full text-center animate-bounce">
+              <span className="text-4xl filter drop-shadow-lg">🚀 불장 (BULL MARKET) 🚀</span>
+              <div className="text-red-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">SCORE x2</div>
+            </div>
+          )}
+          {globalEffect === 'BEAR' && (
+            <div className="absolute top-1/4 w-full text-center animate-pulse">
+              <span className="text-4xl filter drop-shadow-lg">📉 물장 (BEAR MARKET) 📉</span>
+              <div className="text-blue-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">PANIC SELL</div>
+            </div>
+          )}
+          {globalEffect === 'SUPER_CYCLE' && (
+            <div className="absolute top-1/4 w-full text-center animate-bounce">
+              <span className="text-4xl filter drop-shadow-lg">💾 반도체 슈퍼사이클 💾</span>
+              <div className="text-green-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">반도체 주가 폭등 (x3)</div>
+            </div>
+          )}
+          {globalEffect === 'BUBBLE' && (
+            <div className="absolute top-1/4 w-full text-center animate-pulse">
+              <span className="text-4xl filter drop-shadow-lg">🫧 테마주 열풍 (Bubble) 🫧</span>
+              <div className="text-pink-600 font-black text-xl bg-white/80 inline-block px-4 py-1 rounded-full mt-2">도지코인 떡상 (x10)</div>
+            </div>
+          )}
+        </div>
+
+        {/* Price Event Message */}
+        {priceEvent && (
+          <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                            bg-black/90 text-white px-6 py-3 rounded-2xl text-lg font-bold 
+                            animate-bounce z-50 shadow-2xl border-2"
+            style={{ borderColor: priceEvent.color }}>
+            <div className="text-center" style={{ color: priceEvent.color }}>
+              {priceEvent.text}
+            </div>
+          </div>
+        )}
+
+        {/* Danger Line (Static Visual) */}
+        <div className="absolute top-[150px] left-0 w-full z-0 border-b-2 border-red-500/30 border-dashed pointer-events-none flex justify-end px-2">
+          <span className={`text-[10px] font-bold tracking-widest uppercase mt-[-16px] transition-colors duration-300
+                    ${dangerLevel > 0 ? 'text-red-500' : 'text-red-500/50'}
+                `}>Danger Zone</span>
+        </div>
+
+        <Game
+          onScoreUpdate={handleScoreUpdate}
+          onNextItemUpdate={handleNextItemUpdate}
+          setGameState={setGameState}
+          gameState={gameState}
+        />
+      </div>
+
+      {/* Particles */}
+      {particles.map(p => (
+        <div
+          key={p.id}
+          className="absolute rounded-full pointer-events-none z-20"
+          style={{
+            left: p.x,
+            top: p.y, // Removed +100 offset
+            width: 'auto', // Auto width for text
+            height: 30,
+            opacity: p.life,
+            transform: `scale(${1 + (1 - p.life)})`, // Grow slightly as it fades
+            color: p.symbol.startsWith('+') ? '#10B981' : p.color, // Force Green for score
+            textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+            fontWeight: 900,
+            fill: 'currentColor',
+            fontSize: p.symbol.startsWith('+') ? '24px' : '20px', // Larger for score
+            fontFamily: 'monospace',
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            zIndex: 50,
+          }}
+        >
+          {p.symbol}
+        </div>
+      ))}
+
+      {/* Exit Modal */}
+      {showExitModal && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-xs rounded-2xl p-6 shadow-xl flex flex-col gap-4 text-center anim-pop">
+            <h3 className="text-lg font-bold">Nirvana Game을<br />종료할까요?</h3>
+            <div className="flex gap-3 mt-2">
+              <button
+                onClick={() => setShowExitModal(false)}
+                className="flex-1 py-3 bg-gray-100 rounded-xl font-medium active:bg-gray-200 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleExit}
+                className="flex-1 py-3 bg-blue-500 text-white rounded-xl font-medium active:bg-blue-600 transition-colors"
+              >
+                종료하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ad Modal */}
+      {showAdModal && (
+        <AdModal
+          onConfirm={handleConfirmAd}
+          onCancel={() => {
+            setShowAdModal(false);
+            // If denied danger help, die
+            if (adModalType === 'DANGER') setIsGameOver(true);
+          }}
+          type={adModalType}
+        />
+      )}
+
+      {/* ETF Selection Modal */}
+      {showEtfSelection && (
+        <EtfSelectionModal
+          options={etfOptions}
+          onSelect={handleEtfSelect}
+          onClose={() => setShowEtfSelection(false)}
+        />
+      )}
+
+      {showEvolutionModal && (
+        <EvolutionModal
+          onClose={() => setShowEvolutionModal(false)}
+          stockMultipliers={stockMultipliers}
+        />
+      )}
+
+      {/* Version Indicator */}
+      <div className="absolute bottom-1 left-2 text-[10px] text-gray-400 font-mono opacity-50 pointer-events-none z-50">
+        v1.2.9 ({new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})
+      </div>
+
+      {/* Game Over Modal */}
+      {isGameOver && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-500">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl text-center relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 to-orange-500" />
+            <div className="text-6xl mb-4">💀</div>
+            <h2 className="text-3xl font-black text-gray-900 mb-2">GAME OVER</h2>
+            <p className="text-gray-500 mb-6">시장이 마감되었습니다.</p>
+
+            <div className="bg-gray-100 rounded-2xl p-4 mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-gray-500 font-bold">최종 자산 (Seed Money)</span>
+                <span className="text-2xl font-black text-gray-800">${seedMoney.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">Historical High</span>
+                <span className="text-sm font-bold text-blue-600">${bestScore.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 mb-4 text-gray-400 text-xs">
+              <History size={12} />
+              <span>Rescue Used: {adDangerCount}/{MAX_DANGER_ADS}</span>
+            </div>
+
+            <button
+              onClick={handleRestart}
+              className="w-full py-4 bg-black text-white rounded-2xl font-bold text-lg active:scale-95 transition-transform shadow-lg hover:shadow-xl"
+            >
+              시장 재진입 (Restart)
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
