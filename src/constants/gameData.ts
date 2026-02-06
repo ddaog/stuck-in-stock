@@ -16,7 +16,7 @@ export interface GameSymbol {
 export const SYMBOLS: GameSymbol[] = [
     { id: 0, name: 'Doge Coin', radius: 20, color: '#F0C330', score: 1, label: '🐕', texture: '/assets/stock_0.svg', scale: 0.2 },
     { id: 1, name: 'Cacao', radius: 32, color: '#FAE100', score: 3, label: '💬', texture: '/assets/stock_1.svg', scale: 0.32 },
-    { id: 2, name: 'Neighbor', radius: 44, color: '#03C75A', score: 6, label: 'N', texture: '/assets/stock_2.svg', scale: 0.44 },
+    { id: 2, name: 'Never', radius: 44, color: '#03C75A', score: 6, label: 'N', texture: '/assets/stock_2.svg', scale: 0.44 },
     { id: 3, name: 'Samsong', radius: 56, color: '#1428A0', score: 10, label: '🔵', texture: '/assets/stock_3.svg', scale: 0.56 },
     { id: 4, name: 'SKY Hynix', radius: 70, color: '#DB0025', score: 15, label: '🦋', texture: '/assets/stock_4.svg', scale: 0.7 },
     { id: 5, name: 'Te-seul-la', radius: 86, color: '#E82127', score: 21, label: 'T', texture: '/assets/stock_5.svg', scale: 0.86 },
