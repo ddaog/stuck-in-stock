@@ -13,19 +13,19 @@ export interface GameSymbol {
     effectId?: string;    // Logic identifier
 }
 
-// All object sizes reduced by 15% for lower difficulty
+// Sizes: Lv1 fixed, Lv11(Engvidia)=Lv9(Micros-oft) size, Lv2~Lv10 linearly interpolated
 export const SYMBOLS: GameSymbol[] = [
     { id: 0, name: 'Doge Coin', radius: 17, color: '#F0C330', score: 1, label: '🐕', texture: '/assets/stock_0.svg', scale: 0.17 },
-    { id: 1, name: 'Cacao', radius: 27, color: '#FAE100', score: 3, label: '💬', texture: '/assets/stock_1.svg', scale: 0.272 },
-    { id: 2, name: 'Never', radius: 37, color: '#03C75A', score: 6, label: 'N', texture: '/assets/stock_2.svg', scale: 0.374 },
-    { id: 3, name: 'Samsong', radius: 48, color: '#1428A0', score: 10, label: '🔵', texture: '/assets/stock_3.svg', scale: 0.476 },
-    { id: 4, name: 'SKY Hynix', radius: 60, color: '#DB0025', score: 15, label: '🦋', texture: '/assets/stock_4.svg', scale: 0.595 },
-    { id: 5, name: 'Te-seul-la', radius: 73, color: '#E82127', score: 21, label: 'T', texture: '/assets/stock_5.svg', scale: 0.731 },
-    { id: 6, name: 'Go-gull', radius: 88, color: '#4285F4', score: 28, label: 'G', texture: '/assets/stock_6.svg', scale: 0.884 },
-    { id: 7, name: 'Ama-zone', radius: 105, color: '#FF9900', score: 36, label: '📦', texture: '/assets/stock_7.svg', scale: 1.054 },
-    { id: 8, name: 'Micros-oft', radius: 123, color: '#00A4EF', score: 45, label: '🪟', texture: '/assets/stock_8.svg', scale: 1.233 },
-    { id: 9, name: 'A-Plus', radius: 143, color: '#A2AAAD', score: 55, label: '🍎', texture: '/assets/stock_9.svg', scale: 0.561 },
-    { id: 10, name: 'Engvidia', radius: 166, color: '#76B900', score: 66, label: '👁️', texture: '/assets/stock_10.svg', scale: 0.646 },
+    { id: 1, name: 'Cacao', radius: 28, color: '#FAE100', score: 3, label: '💬', texture: '/assets/stock_1.svg', scale: 0.28 },
+    { id: 2, name: 'Never', radius: 38, color: '#03C75A', score: 6, label: 'N', texture: '/assets/stock_2.svg', scale: 0.38 },
+    { id: 3, name: 'Samsong', radius: 49, color: '#1428A0', score: 10, label: '🔵', texture: '/assets/stock_3.svg', scale: 0.49 },
+    { id: 4, name: 'SKY Hynix', radius: 59, color: '#DB0025', score: 15, label: '🦋', texture: '/assets/stock_4.svg', scale: 0.59 },
+    { id: 5, name: 'Te-seul-la', radius: 70, color: '#E82127', score: 21, label: 'T', texture: '/assets/stock_5.svg', scale: 0.70 },
+    { id: 6, name: 'Go-gull', radius: 81, color: '#4285F4', score: 28, label: 'G', texture: '/assets/stock_6.svg', scale: 0.81 },
+    { id: 7, name: 'Ama-zone', radius: 91, color: '#FF9900', score: 36, label: '📦', texture: '/assets/stock_7.svg', scale: 0.91 },
+    { id: 8, name: 'Micros-oft', radius: 102, color: '#00A4EF', score: 45, label: '🪟', texture: '/assets/stock_8.svg', scale: 1.02 },
+    { id: 9, name: 'A-Plus', radius: 112, color: '#A2AAAD', score: 55, label: '🍎', texture: '/assets/stock_9.svg', scale: 1.12 },
+    { id: 10, name: 'Engvidia', radius: 123, color: '#76B900', score: 66, label: '👁️', texture: '/assets/stock_10.svg', scale: 1.23 },
 ];
 
 // Reusing Icons for new ETFs (generic fallbacks or specific logic)
