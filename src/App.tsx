@@ -312,7 +312,7 @@ function App() {
     <div className="relative w-full h-full bg-[#FAFAFA] overflow-hidden select-none">
 
       {/* Price Ticker Bar (Top Fixed) */}
-      <PriceTicker stockMultipliers={stockMultipliers} />
+      <PriceTicker stockMultipliers={stockMultipliers} eventMessage={priceEvent} />
 
       {/* Event/ETF notification (bottom) */}
       {priceEvent && (
