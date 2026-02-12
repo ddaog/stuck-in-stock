@@ -513,7 +513,7 @@ function App() {
 
       {/* Version Indicator */}
       <div className="absolute bottom-1 left-2 text-[10px] text-gray-400 font-mono opacity-50 pointer-events-none z-50">
-        v1.2.9 ({new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})
+        v1.3.0 ({new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})
       </div>
 
       {/* Game Over Modal */}
